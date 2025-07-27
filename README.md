@@ -15,9 +15,9 @@
 
 ## 🔧 Cara Pakai
 
-1. **Upload script ini** (`scan.php`) ke server Anda.
+1. **Upload script ini** (`scanshell.php`) ke server Anda.
 2. **Akses lewat browser**:
-https://domain-anda.com/scan.php
+https://domain-anda.com/scanshell.php
 
 3. Masukkan path direktori yang ingin dipindai.
 4. Klik tombol **Scan**.
