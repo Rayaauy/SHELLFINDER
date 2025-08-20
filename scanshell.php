@@ -54,12 +54,18 @@ function scan_file($path) {
 function safe_delete($path) {
     if(!file_exists($path)) return false;
     
+    // Validasi path untuk mencegah directory traversal
+    $real_path = realpath($path);
+    if($real_path === false || strpos($real_path, realpath($_SERVER['DOCUMENT_ROOT'])) !== 0) {
+        return ['error' => 'Invalid file path'];
+    }
+    
     // Buat folder jika belum ada
     if(!file_exists(BACKUP_DIR)) mkdir(BACKUP_DIR, 0755, true);
     if(!file_exists(QUARANTINE_DIR)) mkdir(QUARANTINE_DIR, 0755, true);
     
-    $backup_path = BACKUP_DIR.basename($path).'.bak';
-    $quarantine_path = QUARANTINE_DIR.basename($path).'.qtn';
+    $backup_path = BACKUP_DIR.basename($path).'.'.time().'.bak';
+    $quarantine_path = QUARANTINE_DIR.basename($path).'.'.time().'.qtn';
     
     // Buat backup
     if(!copy($path, $backup_path)) return false;
@@ -76,6 +82,21 @@ function safe_delete($path) {
     return false;
 }
 
+// Fungsi untuk membaca isi file dengan aman
+function safe_read_file($path) {
+    // Validasi path untuk mencegah directory traversal
+    $real_path = realpath($path);
+    if($real_path === false || strpos($real_path, realpath($_SERVER['DOCUMENT_ROOT'])) !== 0) {
+        return false;
+    }
+    
+    if(!is_readable($real_path) || filesize($real_path) > 1*1024*1024) {
+        return false;
+    }
+    
+    return file_get_contents($real_path);
+}
+
 // ==============================================
 // TAMPILAN WEB
 // ==============================================
@@ -87,6 +108,31 @@ if(isset($_GET['action'])) {
         if($file && file_exists($file)) {
             die(json_encode(safe_delete($file)));
         }
+    }
+    
+    if($_GET['action'] == 'view' && isset($_GET['file'])) {
+        $file = realpath($_GET['file']);
+        if($file && file_exists($file)) {
+            $content = safe_read_file($file);
+            if($content !== false) {
+                die(htmlspecialchars($content));
+            }
+        }
+        http_response_code(404);
+        die('File not found or inaccessible');
+    }
+    
+    if($_GET['action'] == 'delete_multiple' && isset($_POST['files'])) {
+        $results = [];
+        foreach($_POST['files'] as $file_path) {
+            $file = realpath($file_path);
+            if($file && file_exists($file)) {
+                $results[$file_path] = safe_delete($file);
+            } else {
+                $results[$file_path] = ['error' => 'File not found'];
+            }
+        }
+        die(json_encode($results));
     }
     
     die(json_encode(['error' => 'Invalid request']));
@@ -107,9 +153,18 @@ if(isset($_GET['action'])) {
         .risk-medium { background-color: #fff9e6; border-left: 4px solid #ffc107; }
         .risk-low { background-color: #f0f8ff; border-left: 4px solid #0d6efd; }
         .badge-risk { font-size: 0.8em; padding: 3px 8px; }
+        .loading { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; }
+        .loading-content { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; text-align: center; }
     </style>
 </head>
 <body>
+    <div class="loading" id="loadingIndicator">
+        <div class="loading-content">
+            <div class="spinner-border" role="status"></div>
+            <p class="mt-2">Deleting files, please wait...</p>
+        </div>
+    </div>
+
     <div class="container py-5">
         <div class="text-center mb-5">
             <h1 class="display-5 fw-bold">SPHINX101 Scanner</h1>
@@ -251,11 +306,19 @@ if(isset($_GET['action'])) {
             btn.addEventListener('click', function() {
                 const filePath = this.getAttribute('data-file');
                 fetch('?action=view&file=' + encodeURIComponent(filePath))
-                    .then(response => response.text())
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('File not found or inaccessible');
+                        }
+                        return response.text();
+                    })
                     .then(content => {
                         document.getElementById('fileName').textContent = filePath.split('/').pop();
                         document.getElementById('fileContent').textContent = content;
                         new bootstrap.Modal(document.getElementById('fileModal')).show();
+                    })
+                    .catch(error => {
+                        alert(error.message);
                     });
             });
         });
@@ -272,8 +335,11 @@ if(isset($_GET['action'])) {
                                 alert(`File ${result.status} successfully`);
                                 location.reload();
                             } else {
-                                alert('Failed to delete file');
+                                alert('Failed to delete file: ' + (result.error || 'Unknown error'));
                             }
+                        })
+                        .catch(error => {
+                            alert('Error: ' + error.message);
                         });
                 }
             });
@@ -292,11 +358,39 @@ if(isset($_GET['action'])) {
             }
             
             if(confirm(`Delete ${files.length} high risk files?`)) {
-                Promise.all(files.map(file => 
-                    fetch('?action=delete&file=' + encodeURIComponent(file))
-                ).then(() => {
-                    alert(`${files.length} files deleted`);
+                // Show loading indicator
+                document.getElementById('loadingIndicator').style.display = 'block';
+                
+                // Send all files to delete at once
+                const formData = new FormData();
+                files.forEach(file => formData.append('files[]', file));
+                
+                fetch('?action=delete_multiple', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(results => {
+                    let successCount = 0;
+                    let errorCount = 0;
+                    
+                    for (const file in results) {
+                        if (results[file].status) {
+                            successCount++;
+                        } else {
+                            errorCount++;
+                            console.error(`Failed to delete ${file}:`, results[file]);
+                        }
+                    }
+                    
+                    alert(`Deleted ${successCount} files successfully. ${errorCount} files failed.`);
                     location.reload();
+                })
+                .catch(error => {
+                    alert('Error: ' + error.message);
+                })
+                .finally(() => {
+                    document.getElementById('loadingIndicator').style.display = 'none';
                 });
             }
         });
