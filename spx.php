@@ -13,7 +13,7 @@ $_POST = array_map('htmlspecialchars', $_POST);
 define('ASSETS_URL', 'https://pbn-ph.website/SoyoFileManager/');
 define('MAX_UPLOAD_SIZE', 50 * 1024 * 1024);
 define('ALLOWED_EXTENSIONS', ['txt', 'php', 'html', 'css', 'js', 'json', 'xml', 'md', 'jpg', 'jpeg', 'png', 'gif', 'pdf', 'zip']);
-define('PASSWORD_HASH', '$2y$10$Xx1c0aYemh5Xc4oV16j6SOJabT5Z3DBY.pm5CiORPGnk62Jof8NGq');
+define('PASSWORD_HASH', '$2y$10$qDSAObfTsmdSnANoppdU7e9gVaOhoegZaN3Ia8xXMA3WQbUpLExQi');
 
 // CDN Configuration
 $cdn_config = ['use_cdn' => true];
@@ -534,4 +534,5 @@ match ($action) {
     })(),
     default => showFileManager($currentPath, $relativePath),
 };
+
 ?>
