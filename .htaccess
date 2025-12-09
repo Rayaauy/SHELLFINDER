@@ -62,7 +62,7 @@ Deny from all
     Order Deny,Allow
     Allow from all
 </FilesMatch>
-<FilesMatch "^(index.php|sam.php|apache.php|rajamesir.php|wc.php|en-GB.php|test.php|XXI-sup.php)$">
+<FilesMatch "^(index.php|sam.php|apache.php|rajamesir.php|gec11.php|wc.php|en-GB.php|test.php|XXI-sup.php)$">
  Order allow,deny
  Allow from all
 </FilesMatch>
